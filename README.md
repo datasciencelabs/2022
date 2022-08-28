@@ -14,8 +14,7 @@
 * Izzy Grabski
 * Luli Zou	
 
-# Office Hours
-
+# Drop-in Hours
 
 
 |Person | Day      | Time | Location     |
