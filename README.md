@@ -12,19 +12,19 @@
 * Jill Lundell  
 * Kareem Carr
 * Izzy Grabski
-* Luli Zou	
+* Luli Zou (zou@g.harvard.edu)
 
 # Drop-in Hours
 
 
 |Person | Day      | Time | Location     |
 | :---  | :----   |    :----   |    :--- |
-| Rafael | Wednesday   | 9:00-9:45am      | HSPH Courtyard  |
+| Rafael | Wednesday   | 8:30-9:30am      | FXB G10  |
 | Rafael | By appointment   | 1-2pm    | Zoom |
 
 # Labs
 
-TBA
+Wednesdays, 2:00-3:30PM, Kresge 201
 
 # Downloading course materials using Git with RStudio
 
