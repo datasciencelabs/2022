@@ -39,9 +39,31 @@ Now write a `commit message`, which will help you keep track of the changes we m
 
  <center><img src="./images/rstudio_commit.png" alt="gitclean" style="width: 700px;"/></center>
 
-You can now `push` your work to Github by clicking the *green up-arrow* in the Git tab window. If you are asked for username and password, provide them. Note, you can (and should) do this as many times as you want before the homework deadline. What is great about this is that it will make getting help from your TA easier as well as keeping a copy of your work in the cloud in case your computer crashes, or you accidentally delete something.	Also note that committing your work without pushing it will not update the file in your repository. So always remember to push!
+You can now `push` your work to Github by clicking the *green up-arrow* in the Git tab window. If you are asked for username and password, provide them. If they are not recognized, you likely need to setup a token in GitHub and you need to enter it into R Studio. There are instructions on how to do that at the end of this section. Note, you can (and should) do this as many times as you want before the homework deadline. What is great about this is that it will make getting help from your TA easier as well as keeping a copy of your work in the cloud in case your computer crashes, or you accidentally delete something.	Also note that committing your work without pushing it will not update the file in your repository. So always remember to push!
 
 To check that the push was successful, refresh your github repo page, click on your homework file and see if the file was updated. You can also look at the `last commit` column to see when your files were last updated.
+
+
+### Setting up a token in GitHub and linking it to R Studio
+GitHub has great instructions on how to create a token at this link: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token. 
+Make sure you save your token in a secure place where you can find it again. Your token expires after a certain amount of time that you specify when you set it up. I recommend having your token stay valid for at least three months. GitHub will email you when it is time to update your token. 
+
+Once you have your token, you will need to tell R Studio what it is. If it is the first time you have provided a token to R Studio, you will need to install the *gitcreds* package and do the following: 
+
+```{r eval = FALSE}
+library(gitcreds)
+gitcreds_set()
+```
+It may give you the option to enter in the token, or the following questions will pop-up
+
+```{r eval = FALSE}
+1: Keep these credentials
+2: Replace these credentials
+3: See the password / token
+
+```
+
+Select option 2. You will be able to enter in your token. At that point R Studio should be able to push and pull from GitHub. 
 
 ### Summary
 To summarize, it is important to do the following 
