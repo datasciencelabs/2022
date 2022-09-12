@@ -1,0 +1,243 @@
+# Importing data {#importing-data}
+
+```{r, echo=FALSE}
+img_path <- "R/img"
+```
+ 
+
+```{r, echo=FALSE}
+knitr::include_graphics(file.path(img_path,"csv-file.png"))
+```
+
+
+## Paths and the working directory 
+
+```{r, eval=FALSE}
+filename <- "murders.csv"
+dir <- system.file("extdata", package = "dslabs") 
+fullpath <- file.path(dir, filename)
+file.copy(fullpath, "murders.csv")
+```
+
+
+```{r, eval=FALSE}
+library(tidyverse)
+dat <- read_csv(filename)
+```
+
+### The filesystem
+
+
+### Relative and full paths
+
+```{r, eval = FALSE}
+system.file(package = "dslabs")
+```
+
+```{r}
+dir <- system.file(package = "dslabs")
+list.files(path = dir)
+```
+
+### The working directory
+
+```{r, eval=FALSE}
+wd <- getwd()
+```
+
+### Generating path names
+
+
+```{r}
+filename <- "murders.csv"
+dir <- system.file("extdata", package = "dslabs") 
+fullpath <- file.path(dir, filename)
+```
+
+```{r}
+dir <- system.file(package = "dslabs") 
+filename %in% list.files(file.path(dir, "extdata")) 
+```
+
+```{r}
+dir <- system.file("extdata", package = "dslabs") 
+```
+
+```{r}
+fullpath <- file.path(dir, filename)
+```
+
+
+### Copying files using paths
+
+
+```{r}
+file.copy(fullpath, "murders.csv")
+```
+
+```{r, eval=FALSE}
+list.files()
+```
+
+## The readr and readxl packages
+
+```{r, eval=FALSE}
+filename <- "murders.csv"
+dir <- system.file("extdata", package = "dslabs") 
+fullpath <- file.path(dir, filename)
+file.copy(fullpath, "murders.csv")
+```
+
+
+### readr
+
+```{r, warning=FALSE, message=FALSE}
+library(readr)
+```
+
+
+The following functions are available to read-in spreadsheets:
+
+| Function  | Format                                           | Typical suffix |
+|-----------|--------------------------------------------------|----------------| 
+| read_table| white space separated values | txt |
+| read_csv | comma separated values |  csv |
+| read_csv2 | semicolon separated values | csv |
+| read_tsv | tab delimited separated values | tsv |
+| read_delim | general text file format, must define delimiter | txt |
+
+
+
+```{r}
+read_lines("murders.csv", n_max = 3)
+```
+
+```{r, message}
+dat <- read_csv(filename)
+```
+
+```{r, eval=FALSE}
+View(dat)
+```
+
+```{r, eval=FALSE}
+dat <- read_csv(fullpath)
+```
+
+### readxl
+
+
+```{r, eval=FALSE}
+library(readxl)
+```
+
+The package provides functions to read-in Microsoft Excel formats:
+
+| Function  | Format                                           | Typical suffix |
+|-----------|--------------------------------------------------|----------------| 
+| read_excel | auto detect the format | xls, xlsx|
+| read_xls | original format |  xls |
+| read_xlsx | new format | xlsx |
+
+
+## Exercises 
+
+
+1\. Use the `read_csv` function to read each of the files that the following code saves in the `files` object: 
+
+```{r, eval=FALSE}
+path <- system.file("extdata", package = "dslabs")
+files <- list.files(path)
+files
+```
+
+  
+2\. Note that the last one, the `olive` file, gives us a warning. This is because the first line of the file is missing the header for the first column. 
+
+Read the help file for `read_csv` to figure out how to read in the file without reading this header. If you skip the header, you should not get this warning. Save the result to an object called `dat`.
+
+  
+3\. A problem with the previous approach is that we don't know what the columns represent. Type:
+
+```{r, eval=FALSE}
+names(dat)
+```
+
+to see that the names are not informative.
+
+Use the `readLines` function to read in just the first line (we later learn how to extract values from the output). 
+
+
+## Downloading files
+
+```{r, echo=FALSE}
+url <- 
+  "https://raw.githubusercontent.com/rafalab/dslabs/master/inst/extdata/murders.csv"
+```
+
+```{r, eval=FALSE}
+url <- "https://raw.githubusercontent.com/rafalab/dslabs/master/inst/
+extdata/murders.csv"
+```
+
+
+```{r, message = FALSE}
+dat <- read_csv(url)
+```
+
+
+```{r}
+download.file(url, "murders.csv")
+```
+
+```{r, eval=FALSE}
+tmp_filename <- tempfile()
+download.file(url, tmp_filename)
+dat <- read_csv(tmp_filename)
+file.remove(tmp_filename)
+```
+
+## R-base importing functions
+
+```{r}
+dat2 <- read.csv(filename)
+```
+
+
+```{r}
+path <- system.file("extdata", package = "dslabs")
+filename <- "murders.csv"
+x <- scan(file.path(path, filename), sep = ",", what = "c")
+x[1:10]
+```
+
+
+## Text versus binary files
+
+## Unicode versus ASCII
+
+## Organizing data with spreadsheets
+
+
+* __Be Consistent__ - Before you commence entering data, have a plan. Once you have a plan, be consistent and stick to it. 
+* __Choose Good Names for Things__ - You want the names you pick for objects, files, and directories to be memorable, easy to spell, and descriptive. This is actually a hard balance to achieve and it does require time and thought. One important rule to follow is **do not use spaces**, use underscores `_` or dashes instead `-`. Also, avoid symbols; stick to letters and numbers.
+* __Write Dates as YYYY-MM-DD__ -  To avoid confusion, we strongly recommend using this global ISO 8601 standard.
+* __No Empty Cells__ - Fill in all cells and use some common code for missing data. 
+* __Put Just One Thing in a Cell__ - It is better to add columns to store the extra information rather than having more than one piece of information in one cell.
+* __Make It a Rectangle__ - The spreadsheet should be a rectangle. 
+* __Create a Data Dictionary__ - If you need to explain things, such as what the columns are or what the labels used for categorical variables are, do this in a separate file.
+* __No Calculations in the Raw Data Files__ - Excel permits you to perform calculations. Do not make this part of your spreadsheet. Code for calculations should be in a script.
+* __Do Not Use Font Color or Highlighting as Data__ - Most import functions are not able to import this information. Encode this information as a variable instead.
+* __Make Backups__ - Make regular backups of your data. 
+* __Use Data Validation to Avoid Errors__ - Leverage the tools in your spreadsheet software so that the process is as error-free and repetitive-stress-injury-free as possible. 
+* __Save the Data as Text Files__ - Save files for sharing in comma or tab delimited format.
+    
+## Exercises 
+
+1\. Pick a measurement you can take on a regular basis. For example, your daily weight or how long it takes you to run 5 miles. Keep a spreadsheet that includes the date, the hour, the measurement, and any other informative variable you think is worth keeping. Do this for 2 weeks. Then make a plot.
+
+
+```{r, message=FALSE, echo=FALSE}
+tmp <- file.remove("murders.csv")
+```
+
