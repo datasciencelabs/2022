@@ -11,6 +11,19 @@ library(ggplot2)
 
 ## The components of a graph
 
+* Data: The US murders data table is being summarized. We refer to this as the data component.
+
+* Geometry: The plot above is a scatterplot. This is referred to as the geometry component. Other possible geometries are barplot, histogram, smooth densities, qqplot, and boxplot. We will learn more about these in the Data Visualization part of the book.
+
+* Aesthetic mapping: The plot uses several visual cues to represent the information provided by the dataset. The two most important cues in this plot are the point positions on the x-axis and y-axis, which represent population size and the total number of murders, respectively. Each point represents a different observation, and we map data about these observations to visual cues like x- and y-scale. Color is another visual cue that we map to region. We refer to this as the aesthetic mapping component. How we define the mapping depends on what geometry we are using. The points are labeled with the state abbreviations.
+
+We also have:
+
+ 
+* The range of the x-axis and y-axis appears to be defined by the range of the data. They are both on log-scales.
+
+* There are labels, a title, a legend, and we use the style of The Economist magazine.
+
 
 ```{r}
 library(dslabs)
