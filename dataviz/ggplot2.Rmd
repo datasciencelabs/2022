@@ -9,6 +9,12 @@ library(dplyr)
 library(ggplot2)
 ```
 
+## Motivation
+
+"The greatest value of a picture is when it forces us to notice what we never expected to see."
+
+John W. Tukey
+
 ## The components of a graph
 
 * Data: The US murders data table is being summarized. We refer to this as the data component.
