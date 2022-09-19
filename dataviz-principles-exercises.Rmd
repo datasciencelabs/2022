@@ -1,0 +1,168 @@
+## Exercises 
+
+
+For these exercises, we will be using the vaccines data in the __dslabs__ package:
+
+```{r}
+library(dslabs)
+data(us_contagious_diseases)
+```
+
+1\. Pie charts are appropriate:
+
+a. When we want to display percentages.
+b. When __ggplot2__ is not available.
+c. When I am in a bakery.
+d. Never. Barplots and tables are always better.
+
+2\. What is the problem with the plot below:
+
+```{r baplot-not-from-zero-exercises, echo=FALSE, message=FALSE}
+library(tidyverse)
+ds_theme_set()
+data.frame(candidate=c("Clinton","Trump"), electoral_votes = c(232, 306)) |>
+  ggplot(aes(candidate, electoral_votes)) +
+  geom_bar(stat = "identity", width=0.5, color =1, fill = c("Blue","Red")) +
+  coord_cartesian(ylim=c(200,310)) +
+  ylab("Electoral Votes") +
+  xlab("") +
+  ggtitle("Results of Presidential Election 2016")
+```
+
+a. The values are wrong. The final vote was 306 to 232.
+b. The axis does not start at 0. Judging by the length, it appears Trump received 3 times as many votes when, in fact, it was about 30% more. 
+c. The colors should be the same.
+d. Percentages should be shown as a pie chart.
+
+  
+3\. Take a look at the following two plots. They show the same information: 1928 rates of measles across the 50 states.
+
+```{r measels-exercise, fig.height = 5, echo=FALSE}
+library(gridExtra)
+p1 <- us_contagious_diseases |> 
+  filter(year == 1928 & disease=="Measles" & count>0 & !is.na(population)) |> 
+  mutate(rate = count / population * 10000 * 52 / weeks_reporting) |>
+  ggplot(aes(state, rate)) +
+  geom_bar(stat="identity") +
+  coord_flip() +
+  xlab("")
+
+p2 <- us_contagious_diseases |> 
+  filter(year == 1928 & disease=="Measles" & count>0 & !is.na(population)) |> 
+  mutate(rate = count / population * 10000*52 / weeks_reporting) |>
+  mutate(state = reorder(state, rate)) |>
+  ggplot(aes(state, rate)) +
+  geom_bar(stat="identity") +
+  coord_flip() +
+  xlab("")
+grid.arrange(p1, p2, ncol = 2)
+```
+Which plot is easier to read if you are interested in determining which are the best and worst states in terms of rates, and why?
+
+a. They provide the same information, so they are both equally as good.
+b. The plot on the right is better because it orders the states alphabetically.
+c. The plot on the right is better because alphabetical order has nothing to do with the disease and by ordering according to actual rate, we quickly see the states with most and least rates.
+d. Both plots should be a pie chart.
+
+
+4\. To make the plot on the left, we have to reorder the levels of the states' variables.
+
+```{r}
+dat <- us_contagious_diseases |>  
+  filter(year == 1967 & disease=="Measles" & !is.na(population)) |>
+  mutate(rate = count / population * 10000 * 52 / weeks_reporting)
+```
+
+
+
+Note what happens when we make a barplot:
+
+```{r barplot-plot-exercise-example, fig.height = 5}
+dat |> ggplot(aes(state, rate)) +
+  geom_bar(stat="identity") +
+  coord_flip() 
+```
+
+Define these objects:
+
+```{r, eval=FALSE}
+state <- dat$state
+rate <- dat$count/dat$population*10000*52/dat$weeks_reporting
+```
+
+Redefine the `state` object so that the levels are re-ordered. Print the new object `state` and its levels so you can see that the vector is not re-ordered by the levels.
+
+
+5\. Now with one line of code, define the `dat` table as done above, but change the use mutate to create a rate variable and re-order the state variable so that the levels are re-ordered by this variable. Then make a barplot using the code above, but for this new `dat`.
+
+  
+6\. Say we are interested in comparing gun homicide rates across regions of the US. We see this plot:
+
+  
+```{r us-murders-barplot}
+library(dslabs)
+data("murders")
+murders |> mutate(rate = total/population*100000) |>
+group_by(region) |>
+summarize(avg = mean(rate)) |>
+mutate(region = factor(region)) |>
+ggplot(aes(region, avg)) +
+geom_bar(stat="identity") +
+ylab("Murder Rate Average")
+```
+
+
+and decide to move to a state in the western region. What is the main problem with this interpretation?
+
+a. The categories are ordered alphabetically.
+b. The graph does not show standarad errors.
+c. It does not show all the data. We do not see the variability within a region and it's possible that the safest states are not in the West.
+d. The Northeast has the lowest average.
+
+
+7\. Make a boxplot of the murder rates defined as
+
+```{r, eval = FALSE}
+data("murders")
+murders |> mutate(rate = total/population*100000)
+```
+
+by region, showing all the points and ordering the regions by their median rate.
+
+
+8\. The plots below show three continuous variables. 
+
+```{r pseudo-3d-exercise, fig.width=7, fig.height = 3.708,  echo=FALSE}
+library(scatterplot3d)
+library(RColorBrewer)
+set.seed(1)
+n <- 25
+group <- rep(1,n)
+group[1:(round(n/2))] <- 2
+x <- rnorm(n, group, .33)
+y <- rnorm(n, group, .33)
+z <- rnorm(n)
+rafalib::mypar()
+scatterplot3d(x,y,z, color = group, pch=16, ylab="")
+text(8.25, -1.5, label = "y")
+abline(v=4, col=3)
+```
+
+The line $x=2$ appears to separate the points. But it is actually not the case, which we can see by plotting the data in a couple of two-dimensional points.
+
+```{r pseud-3d-exercise-2, echo=FALSE, fig.height = 3}
+rafalib::mypar(1,2)
+plot(x,y, col=group, pch =16)
+abline(v=2, col=3)
+plot(x,z,col=group, pch=16)
+abline(v=2, col=3)
+```
+
+Why is this happening?
+
+a. Humans are not good at reading pseudo-3D plots.
+b. There must be an error in the code.
+c. The colors confuse us.
+d. Scatterplots should not be used to compare two variables when we have access to 3.
+
+
