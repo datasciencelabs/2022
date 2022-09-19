@@ -356,7 +356,7 @@ During President Barack Obama’s 2011 State of the Union Address, the following
 ```{r, echo=FALSE}
 ## idea from http://paldhous.github.io/ucb/2016/dataviz/img/class2_30.jpg
 ## screen shot my own from state of the union
-knitr::include_graphics(file.path(img_path, "state-of-the-union.png"))
+knitr::include_graphics(file.path(img_path, "state-of-the-union.jpg"))
 ```
 (Source: The 2011 State of the Union Address^[https://www.youtube.com/watch?v=kl2g40GoRxg])
 
