@@ -3,3 +3,5 @@
 .RData
 .Ruserdata
 *notes*
+*_cache*
+*_files*
