@@ -271,12 +271,11 @@ heights |>
 
 $$\mbox{Pr}(a < x \leq b) = \int_a^b \frac{1}{\sqrt{2\pi}s} e^{-\frac{1}{2}\left( \frac{x-m}{s} \right)^2} \, dx$$
 
+* Note that it is completely defined by just two parameters: $m$ and $s$, refered to as average and standard deviation.
 
-## The normal distribution 
+* The distribution is symmetric, centered at the average
 
-* Note that it is completely defined by just two parameters: $m$ and $s$. 
-
-* The distribution is symmetric, centered at the average, and most values (about 95%) are within 2 SDs from the average. 
+* Most values (about 95%) are within 2 SDs from the average. 
 
 ## The normal distribution 
 
@@ -285,14 +284,16 @@ Here is what the normal distribution looks like when the average is 0 and the SD
 ```{r summaries-normal-distribution-density, echo=FALSE}
 mu <- 0; s <- 1
 norm_dist <- data.frame(x=seq(-4,4,len=50)*s+mu) |> mutate(density=dnorm(x,mu,s))
-norm_dist |> ggplot(aes(x,density)) + geom_line()
+norm_dist |> ggplot(aes(x,density)) + geom_line() + ylab("f(x)")
 ```
 
 ## The normal distribution 
 
-* The fact that the distribution is defined by just two parameters implies that if a dataset is approximated by a normal distribution, all the information needed to describe the distribution can be encoded in just two numbers
+* The fact that the distribution is defined by just two parameters implies that if a dataset is approximated by a normal distribution, all the information needed to describe the distribution can be encoded in just two numbers: 
 
-* the average and the standard deviation. We now define these values for an arbitrary list of numbers.
+* the average $m$ and 
+
+* the standard deviation $s$.
 
 ## The normal distribution 
 
@@ -328,13 +329,21 @@ c(average = m, sd = s)
 
 ## The normal distribution 
 
-Advacned note: for reasons explained in statistics textbooks, `sd` divides by `length(x)-1` rather than `length(x)`. So `sd(x)` and 
-`sqrt(sum((x-mu)^2) / length(x))` are when `length(x)` is large, these two are practically equal.
+Advacned note: for reasons explained in statistics textbooks, the function `sd` is an estimate of an SD rather than an SD, defined by 
+
+```{r eval=FALSE}
+s <- sqrt(sum((x-mu)^2) / (length(x) - 1))
+```
+
+Note it divides by `length(x)-1` rather than `length(x)`. 
+
+But `sd(x)` and 
+`sqrt(sum((x-mu)^2) / length(x))` are are practically equal when `length(x)` is large, so we often use `sd(x)` when we really want `sqrt(sum((x-mu)^2) / length(x))`.
 
 
 ## Example
 
-Here is a plot of the smooth density and the normal distribution with mean  = `r round(m,1)` and SD = `r round(s,1)` plotted as a black line with our student height smooth density in blue:
+Here is a plot of the smooth density of male heights in blue and the normal distribution with mean  = `r round(m,1)` and SD = `r round(s,1)` plotted as a black curve:
 
 ```{r summaries-data-and-normal-densities, echo=FALSE}
 norm_dist <- data.frame(x = seq(-4, 4, len=50)*s + m) |> 
@@ -347,13 +356,21 @@ heights |> filter(sex == "Male") |> ggplot(aes(height)) +
 
 ## Standard units 
 
-* First, look back at the formula for the normal distribution and note that what is being exponentiated is $-z^2/2$ with $z$ equivalent to $x$ in standard units. 
+* Standard units for a vector `x` is defined as the nnumber of SDs  `(x - mean(x)) / sd(x)`. 
 
-* Because the maximum of  $e^{-z^2/2}$ is when $z=0$, this explains why the maximum of the distribution occurs at the average. It also explains the symmetry since $- z^2/2$ is symmetric around 0. 
+* It tells us, for each entry of `x`, how many SDs away from the average it is.
+
+* Look back at the formula for the normal distribution and note that what is being exponentiated is $-z^2/2$ with $z$ equivalent to $x$ in standard units. 
+
+* Because the maximum of  $e^{-z^2/2}$ is when $z=0$, this explains why the maximum of the distribution occurs at the average. It also explains the symmetry since $- z^2$ is symmetric around 0. 
 
 ## Standard units 
 
-* Second, note that if we convert the normally distributed data to standard units, we can quickly know if, for example, a person is about average ($z=0$), one of the largest ($z \approx 2$), one of the smallest ($z \approx -2$), or an extremely rare occurrence ($z > 3$ or $z < -3$). 
+* Second, note that if we convert the normally distributed data to standard units, we can quickly know if, for example, 
+   - a person is about average ($z \approx 0$), 
+   - one of the largest ($z \approx 2$), 
+   - one of the smallest ($z \approx -2$), 
+   - or an extremely rare occurrence ($z > 3$ or $z < -3$). 
 
 * Remember that it does not matter what the original units are, these rules apply to any data that is approximately normal.
 
@@ -377,17 +394,27 @@ The proportion is about 95%, which is what the normal distribution predicts! To 
 
 ## Quantile-quantile plots
 
-* First let's define the theoretical quantiles for the normal distribution. In statistics books we use the symbol $\Phi(x)$ to define the function that gives us the proportion of a standard normal distributed data that are smaller than $x$.
+* First let's define the theoretical quantiles for the normal distribution.
 
-* So, for example, $\Phi(-1.96) = 0.025$ and $\Phi(1.96) = 0.975$. In R, we can evaluate $\Phi$ using the `pnorm` function:
+* In statistics books we use the symbol $\Phi(x)$ to define the function that gives us the proportion of a standard normal distributed data that are smaller than $x$.
+
+* So, for example, since 95% are between 2 and 2, $\Phi(-2) \approx 0.025$ and $\Phi(2) \approx 0.975$. 
+
+* In R, we can evaluate $\Phi$ using the `pnorm` function:
 
 ```{r}
-pnorm(-1.96)
+pnorm(-2)
 ```
+
+* Note: To get exactly 0.95 we use `pnorm(-1.96)`
 
 ## Quantile-quantile plots
 
-The inverse function $\Phi^{-1}(x)$ gives us the _theoretical quantiles_ for the normal distribution. So, for example, $\Phi^{-1}(0.975) = 1.96$. In R, we can evaluate the inverse of $\Phi$ using the `qnorm` function.
+* The inverse function $\Phi^{-1}(x)$ gives us the _theoretical quantiles_ for the normal distribution. 
+
+* So, for example, $\Phi^{-1}(0.975) = 1.96$. 
+
+* In R, we can evaluate the inverse of $\Phi$ using the `qnorm` function.
 
 ```{r}
 qnorm(0.975)
@@ -395,7 +422,9 @@ qnorm(0.975)
 
 ## Quantile-quantile plots
 
-Note that these calculations are for the standard normal distribution by default (mean = 0, standard deviation = 1), but we can also define these for any normal distribution. 
+* Note that these calculations are for the standard normal distribution by default (mean = 0, standard deviation = 1), 
+
+* but we can also define these for any normal distribution. 
 
 ```{r}
 qnorm(0.975, mean = 5, sd = 2)
@@ -403,23 +432,29 @@ qnorm(0.975, mean = 5, sd = 2)
 
 ## Quantile-quantile plots
 
-* For the normal distribution, all the calculations related to quantiles are done without data, thus the name _theoretical quantiles_. But quantiles can be defined for any distribution, including an empirical one. 
+* For the normal distribution, all the calculations related to quantiles are done without data, thus the name _theoretical quantiles_. 
+
+* But quantiles can be defined for any distribution, including an empirical one. 
 
 * So if we have data in a vector $x$, we can define the quantile associated with any proportion $p$ as the $q$ for which the proportion of values below $q$ is $p$. 
 
 ## Quantile-quantile plots
 
-* Using R code, we can define `q` as the value for which `mean(x <= q) = p`. Notice that not all $p$ have a $q$ for which the proportion is exactly $p$. 
+* We can define `q` as the value for which `mean(x <= q) = p`
+
+* Notice that not all $p$ have a $q$ for which the proportion is exactly $p$. 
 
 * There are several ways of defining the best $q$ as discussed in the help for the `quantile` function. 
 
 ## Quantile-quantile plots
 
 To give a quick example, for the male heights data, we have that:
+
 ```{r}
 mean(x <= 69.5)
 ```
-So about 50% are shorter or equal to 69 inches. This implies that if $p=0.50$ then $q=69.5$.
+
+So about 50% are shorter or equal to 69.5 inches. This implies that if $p=0.50$ then $q=69.5$.
 
 ## Quantile-quantile plots
 
@@ -470,6 +505,7 @@ qplot(theoretical_quantiles, sample_quantiles) + geom_abline()
 
 Notice that this code becomes much cleaner if we use standard units:
 ```{r summaries-qqplot-standardized, eval=FALSE}
+z <- scale(x)
 sample_quantiles <- quantile(z, p)
 theoretical_quantiles <- qnorm(p) 
 qplot(theoretical_quantiles, sample_quantiles) + geom_abline()
@@ -477,7 +513,9 @@ qplot(theoretical_quantiles, sample_quantiles) + geom_abline()
 
 ## Quantile-quantile plots
 
-The above code is included to help describe QQ-plots. However, in practice it is easier to use **ggplot2** code:
+The code we just showed is included to help describe QQ-plots. 
+
+However, in practice it is easier to use **ggplot2** code:
 
 ```{r, eval=FALSE}
 heights |> filter(sex == "Male") |>
@@ -490,7 +528,16 @@ heights |> filter(sex == "Male") |>
 
 While for the illustration above we used 20 quantiles, the default from the `geom_qq` function is to use as many quantiles as data points.
 
-Note that although here we used qqplots to compare an observed distribution to the mathamatically defeinde normal distribution, QQ-plots can be used to compare any two distributions.
+```{r, echo=FALSE}
+heights |> filter(sex == "Male") |>
+  ggplot(aes(sample = scale(height))) + 
+  geom_qq() +
+  geom_abline()
+```
+
+## Quantile-quantile plots
+  
+Note that although here we used qqplots to compare an observed distribution to the mathamatically defeine normal distribution, QQ-plots can be used to compare any two distributions.
 
 ## Percentiles 
 
@@ -509,12 +556,16 @@ Another special case that receives a name are the _quartiles_, which are obtaine
 
 ## Boxplots
 
-Suppose those used to receiving just two numbers as summaries ask us for a more compact numerical summary. The boxplot provides a five-number summary composed of the range along with the quartiles (the 25th, 50th, and 75th percentiles). 
+* Suppose those used to receiving just two numbers as summaries ask us for a more compact numerical summary, rather than histogram or smooth density.
+
+* The boxplot provides a five-number summary composed of the range along with the quartiles (the 25th, 50th, and 75th percentiles). 
 
 
 ## Boxplots
 
-```{r summaries-hist-qqplot-non-normal-data, out.width = "100%",  fig.width = 6, fig.height = 3, echo=FALSE}
+The US state murder rates are an example of a variable that does not follow a normal distribution:
+
+```{r summaries-hist-qqplot-non-normal-data, out.width = "90%",  fig.width = 6, fig.height = 3, echo=FALSE}
 data(murders)
 murders <- murders |> mutate(rate = total/population*100000)
 library(gridExtra)
@@ -527,6 +578,8 @@ grid.arrange(p1, p2, ncol = 2)
 
 
 ## Boxplots
+
+While the average and SD two number summary is not useful, the 5 number boxplot tells use quite a bit:
 
 ```{r summaries-first-boxplot, echo=FALSE}
 murders |> ggplot(aes("",rate)) + geom_boxplot() +
@@ -541,13 +594,15 @@ murders |> ggplot(aes("",rate)) + geom_boxplot() +
 
 ## Stratification 
 
-* Stratification is common in data visualization because we are often interested in how the distribution of variables differs across different subgroups. 
+* Stratification is common in data visualization because we are often interested in how the distributions of variables differ across different subgroups. 
 
-* We will see several examples throughout this part of the book.
+* We will see several examples in the homework are future lectures.
 
 
 
 ## Case study: describing student heights 
+
+Here is an example with student heights:
 
 ```{r summaries-female-male-boxplots, echo=FALSE}
 heights |> ggplot(aes(x=sex, y=height, fill=sex)) +
@@ -556,10 +611,14 @@ heights |> ggplot(aes(x=sex, y=height, fill=sex)) +
 
 ## Case study: describing student heights 
 
-Does the normal approximation also work for the female height data collected by the survey? Exploratory plots reveal that the approximation is not as useful:
+* We saw that the normal approximation worked well for the male heights in our dataset.
+
+* Now we see if it works for the female heights in our dataset.
+
+* Our first exploratory plots reveal that the approximation is not as useful:
  
 
-```{r summaries-histogram-qqplot-female-heights, echo=FALSE, out.width="100%",  fig.width = 6, fig.height = 3}
+```{r summaries-histogram-qqplot-female-heights, echo=FALSE, out.width="90%",  fig.width = 6, fig.asp = 0.4}
 p1 <- heights |> filter(sex == "Female") |>
   ggplot(aes(height)) +
   geom_density(fill="#F8766D") 

@@ -68,6 +68,13 @@ knitr::include_graphics(file.path(img_path, "crazy-pie-chart.png"))
 ## Some motivation
 
 ```{r echo=FALSE}
+knitr::include_graphics(file.path(img_path, "piechart2.jpeg"))
+```
+
+
+## Some motivation
+
+```{r echo=FALSE}
 knitr::include_graphics(file.path(img_path, "crazy-arrows.jpeg"))
 ```
 
@@ -80,27 +87,16 @@ knitr::include_graphics(file.path(img_path, "misleading1.jpeg"))
 ## Some motivation
 
 ```{r echo=FALSE}
-knitr::include_graphics(file.path(img_path, "piechart2.jpeg"))
-```
-
-## Some motivation
-
-```{r echo=FALSE}
 knitr::include_graphics(file.path(img_path, "womenicons.jpeg"))
 ```
 
-## Some motivation
-
-```{r echo=FALSE}
-knitr::include_graphics(file.path(img_path, "pyramid.jpg"))
-```
 
 
 ## Data visualization principles
 
 * We provide some general principles we can use as a guide for effective data visualization. 
 
-* Much of this section is based on a talk by Karl Broman^[http://kbroman.org/] titled "Creating Effective Figures and Tables"^[https://www.biostat.wisc.edu/~kbroman/presentations/graphs2017.pdf] and includes some of the figures which were made with code that Karl makes available on his GitHub repository^[https://github.com/kbroman/Talk_Graphs], as well as class notes from Peter Aldhous' Introduction to Data Visualization course^[http://paldhous.github.io/ucb/2016/dataviz/index.html]. 
+* Much of this section is based on a talk by [Karl Broman](http://kbroman.org/) titled [_Creating Effective Figures and Tables_](https://www.biostat.wisc.edu/~kbroman/presentations/graphs2017.pdf) and includes some of the figures which were made with code that Karl makes available on his [GitHub repository](https://github.com/kbroman/Talk_Graphs), as well as class notes from Peter Aldhous' Introduction to [Data Visualization course](http://paldhous.github.io/ucb/2016/dataviz/index.html). 
 
 * Following Karl's approach, we show some examples of plot styles we should avoid, explain how to improve them, and use these as motivation for a list of principles. 
 
@@ -124,24 +120,21 @@ We may be comparing a
 * or describing the relationship between two variables.
 
 
-
-
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
 library(tidyverse)
-
 ```
 
 
 ## Encoding data using visual cues
 
-We start by describing some principles for encoding data. There are several approaches at our disposal including:
+We start by describing some principles for visualy encoding numerical values. There are several approaches at our disposal including:
 
 * aligned lengths
 * position
 * angles
 * area
 * brightness
-* color hue. 
+* color hue
 
 ## Encoding data using visual cues
 
@@ -152,21 +145,24 @@ browsers <- data.frame(Browser = rep(c("Opera","Safari","Firefox","IE","Chrome")
   mutate(Browser = reorder(Browser, Percentage))
 ```
 
-## Encoding data using visual cues
+Example:
 
 * Suppose we want to report the results from two hypothetical polls regarding browser preference taken in 2000 and then 2015. 
 
-* For each year, we are simply comparing five quantities – the five percentages. 
+* For each year, we are simply comparing five quantities – the five percentages for Opera, Safari, Firefox,IE, and Chrome.
+
+
+## Encoding data using visual cues
 
 * A widely used graphical representation of percentages, popularized by Microsoft Excel, is the pie chart:
 
 
-## Encoding data using visual cues
-
 ```{r piechart,  echo=FALSE}
-p1 <- browsers |> ggplot(aes(x = "", y = Percentage, fill = Browser)) +
-  geom_bar(width = 1, stat = "identity", col = "black")  + coord_polar(theta = "y") +
-  theme_excel() + xlab("") + ylab("") +
+p1 <- browsers |> 
+  ggplot(aes(x = "", y = Percentage, fill = Browser)) +
+  geom_bar(width = 1, stat = "identity", col = "black")  + 
+  coord_polar(theta = "y") +
+  xlab("") + ylab("") +
   theme(axis.text=element_blank(), 
         axis.ticks = element_blank(), 
         panel.grid  = element_blank()) +
@@ -189,7 +185,7 @@ The donut chart is an example of a plot that uses only area:
 browsers |> ggplot(aes(x = 2, y = Percentage, fill = Browser)) +
   geom_bar(width = 1, stat = "identity", col = "black")  + 
   scale_x_continuous(limits=c(0.5,2.5)) + coord_polar(theta = "y") +
-  theme_excel() + xlab("") + ylab("") +
+  xlab("") + ylab("") +
   theme(axis.text=element_blank(), 
         axis.ticks = element_blank(), 
         panel.grid  = element_blank()) +
@@ -208,7 +204,7 @@ browsers |> ggplot(aes(x = 2, y = Percentage, fill = Browser)) +
 library(ggthemes)
 p1 <- browsers |> ggplot(aes(x = "", y = Percentage, fill = Browser)) +
   geom_bar(width = 1, stat = "identity", col = "black")  + coord_polar(theta = "y") +
-  theme_excel() + xlab("") + ylab("") +
+  xlab("") + ylab("") +
   theme(axis.text=element_blank(), 
         axis.ticks = element_blank(), 
         panel.grid  = element_blank()) +
@@ -216,18 +212,22 @@ p1 <- browsers |> ggplot(aes(x = "", y = Percentage, fill = Browser)) +
 p1
 ```
 
+
+
 ## Show the numbers
 
 A better approach is to simply show the numbers. It is not only clearer, but would also save on printing costs if printing a paper copy:
 
-```{r, echo=FALSE}
-browsers |> spread(Year, Percentage) |> knitr::kable("html") |>
+```{r, echo=FALSE, warning=FALSE}
+browsers |> 
+  spread(Year, Percentage) |> 
+  knitr::kable("html") |>
   kableExtra::kable_styling(bootstrap_options = "striped", full_width = FALSE)
 ```
 
 ## Barplots
 
-Because length is the best visual cue, barplots provide the best visualization for a series of proportions:
+Length is the best visual cue:
 
 ```{r two-barplots, echo=FALSE, out.width="100%", fig.width = 6, fig.height = 5}
 p2 <-browsers |>
@@ -235,6 +235,7 @@ p2 <-browsers |>
   geom_bar(stat = "identity", width=0.5) +
   ylab("Percent using the Browser") +
   facet_grid(.~Year)
+
 grid.arrange(p1, p2, nrow = 2)
 ```
 
@@ -250,7 +251,7 @@ at <- with(browsers, 100 - cumsum(c(0,Percentage[-length(Percentage)])) - 0.5*Pe
 label <- percent(browsers$Percentage/100)
 browsers |> ggplot(aes(x = "", y = Percentage, fill = Browser)) +
   geom_bar(width = 1, stat = "identity", col = "black")  + coord_polar(theta = "y") +
-  theme_excel() + xlab("") + ylab("") + ggtitle("2015") +
+  xlab("") + ylab("") + ggtitle("2015") +
   theme(axis.text=element_blank(), 
         axis.ticks = element_blank(), 
         panel.grid  = element_blank()) +
@@ -260,6 +261,18 @@ annotate(geom = "text",
               label = label, size=4)
 ```
 
+
+## The only 2 piecharts I like
+
+```{r echo=FALSE}
+knitr::include_graphics(file.path(img_path, "pyramid.jpg"))
+```
+
+## The only 2 piecharts I like
+
+```{r echo=FALSE}
+knitr::include_graphics(file.path(img_path, "pacman.gif"))
+```
 
 ## Know when to include 0
 
@@ -274,18 +287,20 @@ annotate(geom = "text",
 
 ## Know when to include 0
 
-Below is an illustrative example used by Peter Aldhous in this lecture: [http://paldhous.github.io/ucb/2016/dataviz/week2.html](http://paldhous.github.io/ucb/2016/dataviz/week2.html).
+Below is an illustrative example used by Peter Aldhous in [this lecture](http://paldhous.github.io/ucb/2016/dataviz/week2.html).
 
 ```{r echo=FALSE}
 ## http://paldhous.github.io/ucb/2016/dataviz/img/class2_8.jpg
 knitr::include_graphics(file.path(img_path, "class2_8.jpg"))
 ```
 
-(Source: Fox News, via Media Matters^[http://mediamatters.org/blog/2013/04/05/fox-news-newest-dishonest-chart-immigration-enf/193507].)
+(Source: [Fox News, via Media Matters](http://mediamatters.org/blog/2013/04/05/fox-news-newest-dishonest-chart-immigration-enf/193507).)
 
 
 
 ## Know when to include 0
+
+Here is the correct plot:
 
 ```{r barplot-from-zero-1, echo=FALSE}
 data.frame(Year = as.character(c(2011, 2012, 2013)),Southwest_Border_Apprehensions = c(165244,170223,192298)) |>
@@ -295,13 +310,17 @@ data.frame(Year = as.character(c(2011, 2012, 2013)),Southwest_Border_Apprehensio
 
 ## Know when to include 0
 
+Another examples: 
+
 ```{r, echo=FALSE}
 ## http://i2.wp.com/flowingdata.com/wp-content/uploads/2012/08/Bush-cuts.png
 knitr::include_graphics(file.path(img_path, "Bush-cuts.png"))
 ```
-(Source: Fox News, via Flowing Data^[http://flowingdata.com/2012/08/06/fox-news-continues-charting-excellence/].)
+(Source: [Fox News, via Flowing Data](http://flowingdata.com/2012/08/06/fox-news-continues-charting-excellence/).)
 
 ## Know when to include 0
+
+And here is the correct plot: 
 
 ```{r barplot-from-zero-2, echo=FALSE}
 data.frame(date = c("Now", "Jan 1, 2013"), tax_rate = c(35, 39.6)) |>
@@ -314,13 +333,15 @@ data.frame(date = c("Now", "Jan 1, 2013"), tax_rate = c(35, 39.6)) |>
 
 ## Know when to include 0
 
+One more example: 
+
 ```{r, echo=FALSE}
 ## http://i2.wp.com/flowingdata.com/wp-content/uploads/2012/08/Bush-cuts.png
 knitr::include_graphics(file.path(img_path, "venezuela-election.png"))
 ```
 
 (Source: 
-Venezolana de Televisión via Pakistan Today^[https://www.pakistantoday.com.pk/2018/05/18/whats-at-stake-in-venezuelan-presidential-vote] and Diego Mariano.)
+[Venezolana de Televisión via Pakistan Today](https://www.pakistantoday.com.pk/2018/05/18/whats-at-stake-in-venezuelan-presidential-vote) and Diego Mariano.)
 
 ## Know when to include 0
 
@@ -337,9 +358,9 @@ data.frame(Candidate = factor(c("Maduro", "Capriles"), levels = c("Maduro", "Cap
 
 * When using position rather than length, it is then not necessary to include 0. 
 
-* This is particularly the case when we want to compare differences between groups relative to the within-group variability. 
+* In particularly when comparing differences between to within groups variability. 
 
-```{r points-plot-not-from-zero, echo=FALSE, out.width="100%",  fig.width = 6, fig.height = 3}
+```{r points-plot-not-from-zero, echo=FALSE, out.width="90%",  fig.width = 6, fig.asp=0.45}
 p1 <- gapminder |> filter(year == 2012) |>
   ggplot(aes(continent, life_expectancy)) +
   geom_point()
@@ -358,12 +379,12 @@ During President Barack Obama’s 2011 State of the Union Address, the following
 ## screen shot my own from state of the union
 knitr::include_graphics(file.path(img_path, "state-of-the-union.jpg"))
 ```
-(Source: The 2011 State of the Union Address^[https://www.youtube.com/watch?v=kl2g40GoRxg])
+(Source: [The 2011 State of the Union Address](https://www.youtube.com/watch?v=kl2g40GoRxg))
 
 
 ## Do not distort quantities
 
-Here is comparison of using radius versus arae:
+Here is comparison of using radius versus area:
 
 ```{r area-not-radius, echo = FALSE}
 gdp <- c(14.6, 5.7, 5.3, 3.3, 2.5)
@@ -380,12 +401,12 @@ gdp_data |>
 
 ## Do not distort quantities
 
-Not surprisingly, __ggplot2__ defaults to using area rather than
+* __ggplot2__ defaults to using area rather than
 radius. 
 
 Of course, in this case, we really should not be using area at all since we can use position and length:
 
-```{r barplot-better-than-area, out.width="50%", echo=FALSE}
+```{r barplot-better-than-area, echo=FALSE}
 gdp_data |> 
   filter(y == "Area") |>
   ggplot(aes(Country, GDP)) + 
@@ -407,7 +428,7 @@ gdp_data |>
 
 Note tjat the plot on the right is more informative:
 
-```{r do-not-order-alphabetically, fig.height = 5, echo=FALSE}
+```{r do-not-order-alphabetically, fig.width = 8, echo=FALSE, out.width="95%"}
 data(murders)
 p1 <- murders |> mutate(murder_rate = total / population * 100000) |>
   ggplot(aes(state, murder_rate)) +
@@ -481,7 +502,7 @@ Supppose we want to describe the heigh data to an extra-terrestrial.
 
 A commonly used plot, popularized by Microsoft Excel, is a barplot like this:
 
-```{r show-data-1, echo=FALSE, fig.height=6}
+```{r show-data-1, echo=FALSE}
 data("heights")
 p1 <- heights |> 
   group_by(sex) |> 
@@ -502,7 +523,6 @@ heights |>
   geom_point() 
 ```
 
-## Show the data
 
 ```{r show-data-2, echo=FALSE}
 heights |> 
@@ -513,18 +533,16 @@ heights |>
 
 ## Show the data
 
-But this plot can be improved as there is much over-plotting
+But this plot can be improved with jitter as there is much over-plotting
 
-```{r show-points-with-jitter, echo=FALSE}
+```{r eval=FALSE}
 heights |> 
   ggplot(aes(sex, height)) +
   geom_jitter(width = 0.1, alpha = 0.2) 
 ```
 
-## Show the data
 
-THis is achieved using _jitter_:
-```{r eval=FALSE}
+```{r show-points-with-jitter, echo=FALSE}
 heights |> 
   ggplot(aes(sex, height)) +
   geom_jitter(width = 0.1, alpha = 0.2) 
@@ -553,7 +571,7 @@ heights |>
 
 ## Stack vertically
 
-```{r common-axes-histograms-better, echo=FALSE}
+```{r common-axes-histograms-better, echo=FALSE, fig.asp=1}
 heights |> 
   ggplot(aes(height, ..density..)) +
   geom_histogram(binwidth = 1, color="black") +
@@ -562,7 +580,7 @@ heights |>
 
 ## Same axis
 
-```{r common-axes-histograms-right, echo=FALSE}
+```{r common-axes-histograms-right, echo=FALSE, fig.asp = 1}
 p2 <- heights |> 
   ggplot(aes(height, ..density..)) +
   geom_histogram(binwidth = 1, color="black") +
@@ -605,7 +623,7 @@ p3
 
 ## Contrast and compare
 
-```{r show-the-data-comparison, out.width="100%", echo=FALSE}
+```{r show-the-data-comparison, out.width="100%", fig.asp = 0.4, echo=FALSE}
 grid.arrange(p1, p2, p3, ncol = 3)
 ```
 
@@ -644,7 +662,7 @@ p2 +  geom_jitter(width = .1, alpha = .5)
 
 Using a log transformation here provides a much more informative plot. Compare these two plots:
 
-```{r correct-transformation, out.width="100%", echo=FALSE, fig.height=3.5}
+```{r correct-transformation, out.width="100%", echo=FALSE, fig.asp=0.5}
 p2 <- p2 + geom_boxplot(coef=3) + 
   geom_jitter(width = .1, alpha = .5) + 
   scale_y_log10(breaks = c(1,10,100,1000)) +
@@ -724,7 +742,7 @@ The comparison becomes even easier to make if we use color to denote the two thi
 
 
 ## Think of the color blind
- An example of how we can use a color blind friendly palette is described here: [http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/#a-colorblind-friendly-palette](http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/#a-colorblind-friendly-palette):
+ An example of how we can use a color blind friendly palette is described [here](http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/#a-colorblind-friendly-palette).
 
 ```{r, eval=FALSE}
 color_blind_friendly_cols <- 
@@ -757,18 +775,24 @@ p1 + scale_color_manual(values=color_blind_friendly_cols)
 
 ## Think of the color blind
 
-There are several resources that can help you select colors, for example this one: [http://bconnelly.net/2013/10/creating-colorblind-friendly-figures/](http://bconnelly.net/2013/10/creating-colorblind-friendly-figures/). 
+There are several resources that can help you select colors, for example [this one](http://bconnelly.net/2013/10/creating-colorblind-friendly-figures/). 
 
 ## Plots for two variables
 
 In general, you should use scatterplots to visualize the relationship between two variables.
 
-However, there are some exceptions and we describe two alternative plots here: the _slope chart_ and the _Bland-Altman plot_.
+However, there are some exceptions. 
 
+* We describe two alternative plots here: 
+  - _slope chart_ 
+  -  _Bland-Altman plot_
+  
+  
 ## Slope charts
 
 Slope charts adds angle as a visual cue, useful when comparing two groups **and** each element across two variables, such as years.
-```{r slope-plot}
+
+```{r slope-plot, echo=FALSE}
 west <- c("Western Europe","Northern Europe","Southern Europe",
           "Northern America","Australia and New Zealand")
 
@@ -818,8 +842,9 @@ dat |>
 
 ## Bland-Altman plot
 
+Shows difference in the y-axis and average on the x-axis.
 
-```{r, bland-altman}
+```{r, bland-altman, echo=FALSE}
 library(ggrepel)
 dat |> 
   mutate(year = paste0("life_expectancy_", year)) |>
@@ -931,7 +956,7 @@ display.brewer.all(type="div")
 
 ## Avoid pseudo-three-dimensional plots
 
-The figure below, taken from the scientific literature^[https://projecteuclid.org/download/pdf_1/euclid.ss/1177010488],
+The figure below, taken from the [scientific literature](https://projecteuclid.org/download/pdf_1/euclid.ss/1177010488),
 shows three variables: dose, drug type and survival. 
 
 ```{r, echo=FALSE}
@@ -942,11 +967,18 @@ knitr::include_graphics(file.path(img_path,"fig8b.png"))
 
 ## Avoid pseudo-three-dimensional plots
 
-Humans are not good at seeing in three dimensions and our limitation is even worse with regard to pseudo-three-dimensions. 
+* Humans are not good at seeing in three dimensions and our limitation is even worse with regard to pseudo-three-dimensions. 
 
-Try to determine the values of the survival variable in the previous plot. 
+## Avoid pseudo-three-dimensional plots
 
-Can you tell when the purple ribbon intersects the red one? 
+* Try to determine the values of the survival variable in the previous plot. 
+
+* Can you tell when the purple ribbon intersects the red one? 
+
+```{r, echo=FALSE}
+## https://raw.githubusercontent.com/kbroman/Talk_Graphs/master/Figs/fig8b.png
+knitr::include_graphics(file.path(img_path,"fig8b.png"))
+```
 
 ## Avoid pseudo-three-dimensional plots
 
@@ -996,27 +1028,33 @@ tmp <- options()$digits
 options(digits=7)
 dat <- us_contagious_diseases |>
   filter(year %in% seq(1940, 1980, 10) &  state == "California" &
-          disease %in% c("Measles", "Pertussis", "Polio")) |>
+           disease %in% c("Measles", "Pertussis", "Polio")) |>
   mutate(rate = count / population * 10000) |> 
   mutate(state = reorder(state, rate)) |> 
   select(state, year, disease, rate) |>
-  spread(disease, rate)
-  knitr::kable(dat, "html") |>
-    kableExtra::kable_styling(bootstrap_options = "striped", full_width = FALSE)
-options(digits=tmp)
+  spread(disease, rate) 
+
+knitr::kable(dat) 
 ```
 
 ## Avoid too many significant digits
 
 * We are reporting precision up to 0.00001 cases per 10,000, a very small value in the context of the changes that are occurring across the dates. 
 
+```{r, echo=FALSE}
+knitr::kable(dat) 
+
+options(digits=tmp)
+```
+
+## Avoid too many significant digits
+
 * In this case, two significant figures is more than enough and clearly makes the point that rates are decreasing:
 
 ```{r, echo = FALSE}
 dat0 <- dat |> 
   mutate_at(c("Measles", "Pertussis", "Polio"), ~round(., digits=1))
-knitr::kable(dat0, "html") |>
-  kableExtra::kable_styling(bootstrap_options = "striped", full_width = FALSE)
+knitr::kable(dat0) 
 ```
 
 ## Avoid too many significant digits
@@ -1044,17 +1082,19 @@ dat <- us_contagious_diseases |>
   spread(year, rate) |> 
   mutate_if(is.numeric, round, digits=1) 
 
-knitr::kable(dat, "html") |>
-    kableExtra::kable_styling(bootstrap_options = "striped", full_width = FALSE)
+knitr::kable(dat)
 ```
+
+## Values compared in columns
+
+Another principle related to displaying tables is to place values being compared on columns rather than rows. Compare these two presentations:
 
 
 ```{r, echo = FALSE}
-dat <- dat0 |> 
-  mutate_at(c("Measles", "Pertussis", "Polio"), ~round(., digits=1))
-knitr::kable(dat, "html") |>
-  kableExtra::kable_styling(bootstrap_options = "striped", full_width = FALSE)
+knitr::kable(dat0)
 ```
+
+
 ## Know your audience
 
 Graphs can be used for 
