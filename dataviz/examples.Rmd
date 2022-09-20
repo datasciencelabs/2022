@@ -1,0 +1,466 @@
+# Data visualization in practice {#gapminder}
+
+
+## Case study: new insights on poverty
+
+>>> Journalists and lobbyists tell dramatic stories. That’s their job. They tell stories about extraordinary events and unusual people. The piles of dramatic stories pile up in peoples' minds into an over-dramatic worldview and strong negative stress feelings: "The world is getting worse!", "It’s we vs. them!”, “Other people are strange!", "The population just keeps growing!" and "Nobody cares!"
+
+
+```{r load libraries, message=FALSE, echo=TRUE}
+library(tidyverse)
+library(dslabs)
+data(gapminder)
+gapminder |> as_tibble()
+```
+
+## Scatterplots
+
+```{r fertility-versus-life-expectancy-1962, warning=FALSE}
+filter(gapminder, year == 1962) |>
+  ggplot(aes(fertility, life_expectancy)) +
+  geom_point()
+```
+
+Show continent with color
+
+```{r fertility-versus-life-expectancy-1962-with-color}
+filter(gapminder, year == 1962) |>
+  ggplot( aes(fertility, life_expectancy, color = continent)) +
+  geom_point() 
+```
+
+
+## Faceting
+
+Show a scatterplot for two years and each continent separately.
+
+```{r fertility-versus-life-expectancy-facet, warning=FALSE, out.width="100%", fig.height = 3}
+filter(gapminder, year%in%c(1962, 2012)) |>
+  ggplot(aes(fertility, life_expectancy, col = continent)) +
+  geom_point() +
+  facet_grid(year~continent)
+```
+
+Combine the continents and use color to denote them
+
+```{r fertility-versus-life-expectancy-two-years, warning=FALSE, out.width="100%", fig.height=3}
+filter(gapminder, year%in%c(1962, 2012)) |>
+  ggplot(aes(fertility, life_expectancy, col = continent)) +
+  geom_point() +
+  facet_grid(. ~ year)
+```
+
+### `facet_wrap`
+
+Let's show same plot for 5 years
+
+```{r fertility-versus-life-expectancy-five-years, out.width="100%"}
+years <- c(1962, 1980, 1990, 2000, 2012)
+continents <- c("Europe", "Asia")
+gapminder |> 
+  filter(year %in% years & continent %in% continents) |>
+  ggplot( aes(fertility, life_expectancy, col = continent)) +
+  geom_point() +
+  facet_wrap(~year) 
+```
+
+### Fixed scales for better comparisons
+
+ggplot defaults to using the same y-axis and x-axis range
+
+Here is how to change that:
+
+```{r facet-without-fixed-scales, warning=FALSE}
+filter(gapminder, year%in%c(1962, 2012)) |>
+  ggplot(aes(fertility, life_expectancy, col = continent)) +
+  geom_point() +
+  facet_wrap(. ~ year, scales = "free")
+```
+
+But it makes comparisons difficult.
+
+## Time series plots
+
+Time series plot:
+
+```{r fertility-time-series-plot-points, warning=FALSE}
+gapminder |> 
+  filter(country == "United States") |> 
+  ggplot(aes(year, fertility)) +
+  geom_point()
+```
+
+here it is with lines:
+
+```{r fertility-time-series-plot-curve, warning=FALSE}
+gapminder |> 
+  filter(country == "United States") |> 
+  ggplot(aes(year, fertility)) +
+  geom_line()
+```
+
+Using lines is particularly helpful with comparisons. 
+
+Let's try it:
+
+```{r wrong-time-series-plot, warning=FALSE, message=FALSE}
+countries <- c("South Korea","Germany")
+
+gapminder |> filter(country %in% countries) |> 
+  ggplot(aes(year,fertility)) +
+  geom_line()
+```
+
+What happened?
+
+Need to let ggplot know there are two lines:
+
+```{r time-series-two-curves, warning=FALSE, message=FALSE}
+countries <- c("South Korea","Germany")
+
+gapminder |> filter(country %in% countries & !is.na(fertility)) |> 
+  ggplot(aes(year, fertility, group = country)) +
+  geom_line()
+```
+
+
+Use color to distinguish them:
+
+```{r fertility-time-series-plot}
+countries <- c("South Korea","Germany")
+
+gapminder |> filter(country %in% countries & !is.na(fertility)) |> 
+  ggplot(aes(year,fertility, col = country)) +
+  geom_line()
+```
+
+
+### Labels instead of legends 
+
+For trend plots we recommend labeling the lines rather than using legends.
+
+The package  `geomtextpath`
+
+```{r labels-better-than-legends}
+library(geomtextpath)
+
+gapminder |> 
+  filter(country %in% countries) |> 
+  ggplot(aes(year, life_expectancy, col = country, label = country)) +
+  geom_textpath() +
+  theme(legend.position = "none")
+```
+
+
+## Data transformations
+
+covert gdp to dollars per day
+
+```{r}
+gapminder <- gapminder |>  mutate(dollars_per_day = gdp/population/365)
+```
+
+
+### Log transformation
+
+Here is a histogram of per day incomes from 1970:
+
+```{r dollars-per-day-distribution}
+past_year <- 1970
+gapminder |> 
+  filter(year == past_year & !is.na(gdp)) |>
+  ggplot(aes(dollars_per_day)) + 
+  geom_histogram(binwidth = 1, color = "black")
+```
+
+We use the `color = "black"` argument to draw a boundary and clearly distinguish the bins.
+
+Here is the distribution if we apply a log base 2 transform:
+```{r dollars-per-day-distribution-log}
+gapminder |> 
+  filter(year == past_year & !is.na(gdp)) |>
+  ggplot(aes(log2(dollars_per_day))) + 
+  geom_histogram(binwidth = 1, color = "black")
+```
+
+In a way this provides a _close-up_ of the mid to lower income countries.
+
+### Which base? 
+
+* log base 10 usueful for changes in order of magnitude
+
+* log base 2 useful in most other circumstances
+
+* log natural base rarely if ever useful for dataviz
+
+
+For population log 10 probably best:
+
+```{r}
+filter(gapminder, year == past_year) |>
+  summarize(min = min(population), max = max(population))
+```
+
+Here is the histogram of the transformed values:
+
+```{r population-histogram-log10}
+gapminder |> 
+  filter(year == past_year) |>
+  ggplot(aes(log10(population))) +
+  geom_histogram(binwidth = 0.5, color = "black")
+```
+
+In the above, we quickly see that country populations range between ten thousand and ten billion.
+
+### Transform the values or the scale? 
+
+
+
+Transforming the values make plot more readable. mid values easier to interpret.
+
+
+`----1----x----2--------3----`
+
+for log transformed data, we know that the value of `x` is about 1.5. If the scales are logged:
+
+This saves you the conversion in your head, but figuring out `x` is harder.
+
+`----10---x---100------1000---`
+
+
+```{r dollars-per-day-log-scale}
+gapminder |> 
+  filter(year == past_year & !is.na(gdp)) |>
+  ggplot(aes(dollars_per_day)) + 
+  geom_histogram(binwidth = 1, color = "black") +
+  scale_x_continuous(trans = "log2")
+```
+
+## Visualizing multimodal distributions
+
+## Comparing multiple distributions with boxplots and ridge plots
+
+
+```{r dollars-per-day-points}
+gapminder |> 
+  filter(year == past_year & !is.na(gdp)) |>
+  mutate(region = reorder(region, dollars_per_day, FUN = median)) |>
+  ggplot(aes(dollars_per_day, region)) +
+  geom_point() +
+  scale_x_continuous(trans = "log2")  
+```
+
+
+```{r}
+gapminder <- gapminder |> 
+  mutate(group = case_when(
+    region %in% c("Western Europe", "Northern Europe","Southern Europe", 
+                    "Northern America", 
+                  "Australia and New Zealand") ~ "West",
+    region %in% c("Eastern Asia", "South-Eastern Asia") ~ "East Asia",
+    region %in% c("Caribbean", "Central America", 
+                  "South America") ~ "Latin America",
+    continent == "Africa" & 
+      region != "Northern Africa" ~ "Sub-Saharan",
+    TRUE ~ "Others"))
+```
+
+We turn this `group` variable into a factor to control the order of the levels:
+
+```{r}
+gapminder <- gapminder |> 
+  mutate(group = factor(group, levels = c("Others", "Latin America", 
+                                          "East Asia", "Sub-Saharan",
+                                          "West")))
+```
+
+
+In the next section we demonstrate how to visualize and compare distributions across groups.
+
+### Boxplots 
+
+
+```{r dollars-per-day-boxplot}
+p <- gapminder |> 
+  filter(year == past_year & !is.na(gdp)) |>
+  ggplot(aes(group, dollars_per_day)) +
+  geom_boxplot() +
+  scale_y_continuous(trans = "log2") +
+  xlab("") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+p
+```
+
+Boxplots have the limitation that by summarizing the data into five numbers, we might miss important characteristics of the data. One way to avoid this is by showing the data.
+
+```{r dollars-per-day-boxplot-with-data}
+p + geom_point(alpha = 0.5)
+```
+
+
+### Ridge plots 
+
+Boxplots are very efficient in summarizing distributions but can hide bimodalities:
+
+```{r boxplot-dont-show-bimodal, warning=FALSE, out.width="100%", message = FALSE, echo=FALSE, fig.height=3}
+set.seed(1987)
+z <- sample(c(0,1), 1000, replace = TRUE, prob = c(0.25, 0.75))
+x <- rnorm(100)*z + rnorm(100, 5)*(1 - z)
+p1 <- qplot(x, geom = "density", fill = 1, show.legend=FALSE, alpha = 0.2) +
+  scale_x_continuous(limits=c(-4,8.5))
+p2 <- qplot("", x, geom="boxplot")
+gridExtra::grid.arrange(p1, p2, nrow = 1)
+```
+
+
+If not too many categories, we can plot density plots instead of boxes.
+```{r ridge-plot, message=FALSE}
+library(ggridges)
+p <- gapminder |> 
+  filter(year == past_year & !is.na(dollars_per_day)) |>
+  ggplot(aes(dollars_per_day, group)) + 
+  scale_x_continuous(trans = "log2") 
+p  + geom_density_ridges() 
+```
+
+We can add points to show data:
+```{r ridge-plot-with-points, message=FALSE}
+p + geom_density_ridges(jittered_points = TRUE)
+```
+
+or tick marks:
+
+```{r ridge-plot-with-rug, message=FALSE}
+p + geom_density_ridges(jittered_points = TRUE, 
+                        position = position_points_jitter(height = 0),
+                        point_shape = '|', point_size = 3, 
+                        point_alpha = 1, alpha = 0.7)
+```
+
+
+### Example: 1970 versus 2010 income distributions
+
+```{r income-hist-west-v-developing-two-years}
+past_year <- 1970
+present_year <- 2010
+years <- c(past_year, present_year)
+gapminder |> 
+  filter(year %in% years & !is.na(gdp)) |>
+  mutate(west = ifelse(group == "West", "West", "Developing")) |>
+  ggplot(aes(dollars_per_day)) +
+  geom_histogram(binwidth = 1, color = "black") +
+  scale_x_continuous(trans = "log2") + 
+  facet_grid(year ~ west)
+```
+
+
+## The ecological fallacy and importance of showing the data
+
+```{r ecological-fallacy-averages, echo=FALSE}
+gapminder <- gapminder |> 
+  mutate(group = case_when(
+    region %in% c("Western Europe", "Northern Europe",
+                  "Southern Europe", "Northern America", 
+                  "Australia and New Zealand") ~ "West",
+    region %in% "Northern Africa" ~ "Northern Africa",
+    region %in% c("Eastern Asia", "South-Eastern Asia") ~ "East Asia",
+    region == "Southern Asia"~ "Southern Asia",
+    region %in% c("Central America", "South America", 
+                  "Caribbean") ~ "Latin America",
+    continent == "Africa" & 
+      region != "Northern Africa" ~ "Sub-Saharan",
+    region %in% c("Melanesia", "Micronesia", 
+                  "Polynesia") ~ "Pacific Islands"))
+surv_income <- gapminder |> 
+  filter(year %in% present_year & !is.na(gdp) & 
+           !is.na(infant_mortality) & !is.na(group)) |>
+  group_by(group) |>
+  summarize(income = sum(gdp)/sum(population)/365,
+            infant_survival_rate = 
+              1 - sum(infant_mortality/1000*population)/sum(population)) 
+
+#surv_income |> arrange(income) |> print(n=nrow(surv_income))
+
+surv_income |> ggplot(aes(income, infant_survival_rate, label = group, color = group)) +
+  scale_x_continuous(trans = "log2", limits = c(0.25, 150)) +
+  scale_y_continuous(trans = "logit", limit = c(0.875, .9981), 
+                     breaks = c(.85,.90,.95,.99,.995,.998)) +
+  geom_label_repel(size = 3, show.legend = FALSE)
+```
+
+The relationship between these two variables is almost perfectly linear and the graph shows a dramatic difference. While in the West less than 0.5% of infants die, in Sub-Saharan Africa the rate is higher than 6%! 
+
+Note that the plot uses a new transformation, the logistic transformation.
+
+### Logistic transformation {#logit}
+
+$$f(p) = \log \left( \frac{p}{1-p} \right)$$
+
+### Show the data 
+
+```{r ecological-fallacy-all-data, echo=FALSE}
+library(ggrepel)
+highlight <- c("Sierra Leone", "Mauritius",  "Sudan", "Botswana", "Tunisia",
+               "Cambodia","Singapore","Chile", "Haiti", "Bolivia",
+               "United States","Sweden", "Angola", "Serbia")
+
+gapminder |> filter(year %in% present_year & !is.na(gdp) & !is.na(infant_mortality) & !is.na(group) ) |>
+  mutate(country_name = ifelse(country %in% highlight, as.character(country), "")) |>
+  ggplot(aes(dollars_per_day, 1 - infant_mortality/1000, col = group, label = country_name)) +
+  scale_x_continuous(trans = "log2", limits=c(0.25, 150)) +
+  scale_y_continuous(trans = "logit",limit=c(0.875, .9981),
+                     breaks=c(.85,.90,.95,.99,.995,.998)) + 
+  geom_point(alpha = 0.5, size = 3) +
+  geom_text_repel(size = 4, show.legend = FALSE)
+```
+
+
+## Encoding third variables
+
+
+### Case study: vaccines and infectious diseases {#vaccines}
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(RColorBrewer)
+library(dslabs)
+data(us_contagious_diseases)
+names(us_contagious_diseases)
+```
+
+
+```{r}
+the_disease <- "Measles"
+dat <- us_contagious_diseases |>
+  filter(!state%in%c("Hawaii","Alaska") & disease == the_disease) |>
+  mutate(rate = count / population * 10000 * 52 / weeks_reporting) |> 
+  mutate(state = reorder(state, rate)) 
+```
+
+We can now easily plot disease rates per year. Here are the measles data from California:
+
+```{r california-measles-time-series}
+dat |> filter(state == "California" & !is.na(rate)) |>
+  ggplot(aes(year, rate)) +
+  geom_line() + 
+  ylab("Cases per 10,000")  + 
+  geom_vline(xintercept=1963, col = "blue")
+```
+
+
+```{r vaccines-plot, out.width="100%", fig.height=5}
+dat |> ggplot(aes(year, state, fill = rate)) +
+  geom_tile(color = "grey50") +
+  scale_x_continuous(expand=c(0,0)) +
+  scale_fill_gradientn(colors = brewer.pal(9, "Reds"), trans = "sqrt") +
+  geom_vline(xintercept=1963, col = "blue") +
+  theme_minimal() +  
+  theme(panel.grid = element_blank(), 
+        legend.position="bottom", 
+        text = element_text(size = 8)) +
+  ggtitle(the_disease) + 
+  ylab("") + xlab("")
+```
+
+
+
