@@ -433,7 +433,7 @@ names(us_contagious_diseases)
 the_disease <- "Measles"
 dat <- us_contagious_diseases |>
   filter(!state%in%c("Hawaii","Alaska") & disease == the_disease) |>
-  mutate(rate = count / population * 10000 * 52 / weeks_reporting) |> 
+  mutate(rate = count / population * 100000 * 52 / weeks_reporting) |> 
   mutate(state = reorder(state, rate)) 
 ```
 
@@ -443,7 +443,7 @@ We can now easily plot disease rates per year. Here are the measles data from Ca
 dat |> filter(state == "California" & !is.na(rate)) |>
   ggplot(aes(year, rate)) +
   geom_line() + 
-  ylab("Cases per 10,000")  + 
+  ylab("Cases per 100,000")  + 
   geom_vline(xintercept=1963, col = "blue")
 ```
 
