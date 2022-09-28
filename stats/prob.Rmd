@@ -1,0 +1,426 @@
+## Intro to Probability 
+
+In games of chance, probability has a very intuitive definition. For instance, we know what it means that the chance of a pair of dice coming up seven is 1 in 6. However, this is not the case in other contexts. Today probability theory is being used much more broadly with the word _probability_ commonly used in everyday language. Google's auto-complete of "What are the chances of" give us: "having twins", "rain today", "getting struck by lightning", and "getting cancer". We will describre how probability is useful to understand and describe real-world events when performing data analysis.
+
+Because knowing how to compute probabilities gives you an edge in games of chance, throughout history many smart individuals, including famous mathematicians such as Cardano, Fermat, and Pascal, spent time and energy thinking through the math of these games. As a result, Probability Theory was born. Probability continues to be highly useful in modern games of chance. For example, in poker, we can compute the probability of winning a hand based on the cards on the table. Also, casinos rely on probability theory to develop games that almost certainly guarantee a profit. 
+
+Probability theory is useful in many other contexts and, in particular, in areas that depend on data affected by chance in some way. All of the other chapters in this part build upon probability theory. Knowledge of probability is therefore indispensable for data science.
+
+
+# Random variables
+
+In data science, we often deal with data that is affected by chance in some way: the data comes from a random sample, the data is affected by measurement error, or the data measures some outcome that is random in nature. Being able to quantify the uncertainty introduced by randomness is one of the most important jobs of a data analyst. Statistical inference offers a framework, as well as several practical tools, for doing this. The first step is to learn how to mathematically describe random variables. 
+
+In this chapter, we introduce random variables and their properties starting with their application to games of chance. We then describe some of the events surrounding the financial crisis of 2007-2008^[https://en.wikipedia.org/w/index.php?title=Financial_crisis_of_2007%E2%80%932008] using probability theory. This financial crisis was in part caused by underestimating the risk of certain securities^[https://en.wikipedia.org/w/index.php?title=Security_(finance)] sold by financial institutions. Specifically, the risks of mortgage-backed securities (MBS) and collateralized debt obligations (CDO) were grossly underestimated. These assets were sold at prices that assumed most homeowners would make their monthly payments, and the probability of this not occurring was calculated as being low. A combination of factors resulted in many more defaults than were expected, which led to a price crash of these securities. As a consequence, banks lost so much money that they needed government bailouts to avoid closing down completely.
+
+## Random variables
+
+Random variables are numeric outcomes resulting from random processes. We can easily generate random variables in R. For example, define `X` to be 1 if a coin is heads or 0 otherwise:
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE}
+library(tidyverse)
+dslabs::ds_theme_set()
+set.seed(1)
+outcomes <- c("heads", "tails")
+X <- ifelse(sample(outcomes, 1) == "heads", 1, 0)
+X
+```
+
+Here `X` is a random variable: every time we select a new bead the outcome changes randomly.  See below:
+
+```{r}
+ifelse(sample(outcomes, 1) == "heads", 1, 0)
+ifelse(sample(outcomes, 1) == "heads", 1, 0)
+ifelse(sample(outcomes, 1) == "heads", 1, 0)
+```
+
+Here is the same thing for the some of two dice:
+
+```{r}
+outcomes <- 1:6
+X <- sample(outcomes, 1) + sample(outcomes, 1) 
+X
+```
+
+
+```{r}
+sample(outcomes, 1) + sample(outcomes, 1) 
+sample(outcomes, 1) + sample(outcomes, 1) 
+sample(outcomes, 1) + sample(outcomes, 1)
+```
+
+Quiz: Why is this wrong?
+
+```{r}
+outcomes <- 2:12
+X <- sample(outcomes, 1)
+X
+```
+
+
+## Monte Carlo Simulations: Birthday problem 
+
+Suppose you are in a classroom with 50 people. If we assume this is a randomly selected group of 50 people, what is the chance that at least two people have the same birthday? 
+
+```{r,echo=FALSE}
+set.seed(1)
+```
+
+We can generate one outcome like this:
+
+```{r}
+n <- 50
+bdays <- sample(1:365, n, replace = TRUE)
+```
+
+The `duplicate` function makes it easy to check of two or more have same birthday.
+
+```{r}
+duplicated(c(1,2,3,1,4,3,5))
+```
+
+Did it happen?
+
+```{r}
+any(duplicated(bdays))
+```
+To estimate the probability of a shared birthday in the group, we repeat this experiment by sampling sets of 50 birthdays over and over:
+
+```{r birthday-problem}
+B <- 10000
+same_birthday <- function(n){
+  bdays <- sample(1:365, n, replace=TRUE)
+  any(duplicated(bdays))
+}
+results <- replicate(B, same_birthday(50))
+mean(results)
+```
+
+
+We can create a look-up table:
+```{r}
+compute_prob <- function(n, B=10000){
+  results <- replicate(B, same_birthday(n))
+  mean(results)
+}
+
+n <- seq(1,60)
+prob <- sapply(n, compute_prob)
+```
+
+We can now make a plot of the estimated probabilities of two people having the same birthday in a group of size $n$:
+
+```{r birthday-problem-mc-probabilities, warning=FALSE, message=FALSE}
+library(tidyverse)
+qplot(n, prob)
+```
+
+We can actually use math:
+
+$$
+1 \times \frac{364}{365}\times\frac{363}{365} \dots \frac{365-n + 1}{365}
+$$
+
+And we can check if simulation matches math:
+
+```{r birthday-problem-exact-probabilities}
+exact_prob <- function(n){
+  prob_unique <- seq(365,365-n+1)/365 
+  1 - prod( prob_unique)
+}
+eprob <- sapply(n, exact_prob)
+qplot(n, prob) + geom_line(aes(n, eprob), col = "red")
+```
+
+## Infinity in practice
+
+The theory described here requires repeating experiments over and over forever. In practice we can't do this. 
+In the examples above, we used $B=10,000$ Monte Carlo experiments and it turned out that this provided accurate estimates. 
+
+We know that the larger $B$, the better the approximation. But how big do we need it to be? This is actually a challenging question and answering it often requires advanced theoretical statistics training. 
+
+One practical approach we will describe here is to check for the stability of the estimate. The following is an example with the birthday problem for a group of 25 people. 
+
+```{r monte-carlo-convergence}
+B <- 10^seq(1, 5, len = 100)
+compute_prob <- function(B, n=25){
+  same_day <- replicate(B, same_birthday(n))
+  mean(same_day)
+}
+prob <- sapply(B, compute_prob)
+qplot(log10(B), prob, geom = "line")
+```
+
+
+
+## Continuous probability
+
+In Section \@ref(ecdf-intro), we explained why when summarizing a list of numeric values, such as heights, it is not useful to construct a distribution that defines a proportion to each possible outcome. Similarly, for a random variable that can take any value in a continuous set, it impossible to assign a positive probabilities to the infinite number of possible values. Here we describe how we mathematically define distributions for continuos random variables and useful approximations often used in  data analysis.
+
+
+
+
+### Cumulative distribution functions
+
+We used the heights of adult male students as an example
+
+
+```{r,  message=FALSE, warning=FALSE}
+data(heights)
+x <- heights %>% filter(sex=="Male") %>% pull(height)
+```
+
+and defined the empirical cumulative distribution function (eCDF) as 
+
+```{r}
+F <- function(a) mean(x<=a)
+```
+
+which, for any value `a`, gives the proportion of values in the list `x` that are smaller or equal than `a`.
+
+Let's connect the eCDF to probability by asking: if I pick one of the male students at random, what is the chance that he is taller than 70.5 inches? Because every student has the same chance of being picked, the answer to this is equivalent to the proportion of students that are taller than 70.5 inches. Using the eCDF we obtain an answer by typing:
+
+```{r}
+1 - F(70)
+```
+
+The CDF is a version of the eCDF that assigns theoretical probabilities for each $a$ rather than proportions computed from data. 
+
+$$ F(a) = \mbox{Pr}(X \leq a) $$
+
+Once a CDF is defined, we can use it to compute the probability of any subset of values. For instance, the probability of a student being between height `a` and height `b` is:
+
+$$
+\mbox{Pr}(a < X \leq b) = F(b)-F(a)
+$$
+
+Because we can compute the probability for any possible event this way, the CDF defines the probability distribution.
+
+### Probability density function
+
+A mathematical result that is actually very useful in practice is that for most CDFs we can define a function, call it $f(x)$, that permits us to construct the CDF using Calculus, like this:
+
+$$
+F(b) - F(a) = \int_a^b f(x)\,dx
+$$
+$f(x)$ is referred to as the _probability density function_. 
+
+
+The intuition:
+
+```{r echo=FALSE}
+cont <- data.frame(x=seq(0,5, len = 300), y=dgamma(seq(0,5, len = 300), 2, 2))
+disc <- data.frame(x=seq(0, 5, 0.075), y=dgamma(seq(0, 5, 0.075), 2, 2))
+ggplot(mapping = aes(x,y)) +
+  geom_col(data =  disc) +
+  geom_line(data = cont) +
+  ylab("f(x)")
+```
+
+
+An example of such a continuous distribution is the normal distribution. As we saw in \@ref(normal-distribution), the probability density function is given by:
+
+
+$$f(x) = e^{-\frac{1}{2}\left( \frac{x-m}{s} \right)^2} $$
+
+
+The function `pnorm` computes the integral
+
+```{r, eval=FALSE}
+F(a) = pnorm(a, m, s)
+```
+
+This is useful because if we are willing to use the normal approximation for, say, height, we don't need the entire dataset to answer questions such as: what is the probability that a randomly selected student is taller then 70 inches? We just need the average height and standard deviation:
+
+```{r}
+m <- mean(x)
+s <- sd(x)
+1 - pnorm(70.5, m, s)
+```
+
+### Theoretical distributions as approximations
+
+The normal distribution is derived mathematically: we do not need data to define it. For practicing data scientists, almost everything we do involves data. Data is always, technically speaking, discrete. For example, we could consider our height data categorical with each specific height a unique category. The probability distribution is defined by the proportion of students reporting each height. Here is a plot of that probability distribution:
+
+```{r plot-of-height-frequencies, echo=FALSE}
+rafalib::mypar()
+plot(prop.table(table(x)), xlab = "a = Height in inches", ylab = "Pr(X = a)")
+```
+
+Although it is not continuous, a continous approximation can be useful:
+
+
+```{r}
+mean(x <= 68.5) - mean(x <= 67.5)
+pnorm(68.5, m, s) - pnorm(67.5, m, s) 
+
+mean(x <= 69.5) - mean(x <= 68.5)
+pnorm(69.5, m, s) - pnorm(68.5, m, s) 
+
+mean(x <= 70.5) - mean(x <= 69.5)
+pnorm(70.5, m, s) - pnorm(69.5, m, s) 
+```
+
+Note how close we get with the normal approximation:
+
+```{r}
+```
+
+However, the approximation is not as useful for other intervals. For instance, notice how the approximation breaks down when we try to estimate:
+
+```{r}
+mean(x <= 70.9) - mean(x<=70.1)
+pnorm(70.9, m, s) - pnorm(70.1, m, s)
+```
+
+
+### The probability density
+Although for continuous distributions the probability of a single value $\mbox{Pr}(X=x)$ is not defined, there is a theoretical definition that has a similar interpretation. The probability density at $x$ is defined as the function $f(a)$ such that:
+
+$$
+F(a) = \mbox{Pr}(X\leq a) = \int_{-\infty}^a f(x)\, dx
+$$
+
+For those that know calculus, remember that the integral is related to a sum: it is the sum of bars with widths approximating 0. If you don't know calculus, you can think of $f(x)$ as a curve for which the area under that curve up to the value $a$, gives you the probability $\mbox{Pr}(X\leq a)$. 
+
+For example, to use the normal approximation to estimate the probability of someone being taller than 76 inches, we use:
+
+
+```{r}
+1 - pnorm(76, m, s)
+```
+
+which mathematically is the grey area below:
+
+```{r intergrals, echo=FALSE}
+dat <- tibble(x = seq(-4, 4, length=100) * s + m,
+              y = dnorm(x, m, s))
+
+dat_ribbon <- filter(dat, x >= 2 * s + m)
+
+ggplot(dat, aes(x, y)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = 0, ymax = y), data = dat_ribbon)
+```
+
+The curve you see is the probability density for the normal distribution. In R, we get this using the function `dnorm`. 
+
+Although it may not be immediately obvious why knowing about probability densities is useful, understanding this concept will be essential to those wanting to fit models to data for which predefined functions are not available.
+
+
+## Monte Carlo simulations for continuous variables
+
+
+```{r}
+n <- length(x)
+m <- mean(x)
+s <- sd(x)
+simulated_heights <- rnorm(n, m, s)
+```
+
+Not surprisingly, the distribution looks normal:
+
+```{r simulated-heights, echo=FALSE}
+data.frame(simulated_heights = simulated_heights) |>
+  ggplot(aes(simulated_heights)) + 
+  geom_histogram(color="black", binwidth = 1) 
+```
+
+This is useful for approximation distributions any random variable  
+
+For example, we pick 800 males at random, what is the distribution of the tallest person? How rare is a seven footer in a group of 800 males? The following Monte Carlo simulation helps us answer that question:
+
+```{r}
+B <- 10000
+tallest <- replicate(B, {
+  simulated_data <- rnorm(800, m, s)
+  max(simulated_data)
+})
+```
+
+Having a seven footer is quite rare:
+
+```{r}
+mean(tallest >= 7*12)
+```
+
+Here is the resulting distribution:
+
+```{r simulated-tallest-height, echo=FALSE}
+data.frame(tallest = tallest) |> ggplot(aes(tallest)) + 
+  geom_histogram(color="black", binwidth = 1) 
+```
+
+Note that it does not look normal.
+
+## Other continuous distributions
+
+The normal distribution 
+
+```{r normal-density, eval=FALSE}
+x <- seq(-4, 4, length.out = 100)
+qplot(x, f, geom = "line", data = data.frame(x, f = dnorm(x)))
+```
+
+is not the only useful theoretical distribution.  
+
+For the student-t, described later in Section \@ref(t-dist), the shorthand `t` is used so the functions are `dt` for the density, `qt` for the quantiles, `pt` for the cumulative distribution function, and `rt` for Monte Carlo simulation. We alsog have `pois`, `gamma`, `binom`, `beta`, and many others...
+
+
+## Sample models
+
+Here is a sample model for roulette:
+
+```{r}
+color <- rep(c("Black", "Red", "Green"), c(18, 18, 2))
+```
+
+We can use it to model the distribution of how much the casino makes each time you play. Here are 1,000 outcomes:
+
+```{r}
+n <- 1000
+X <- sample(ifelse(color == "Red", -1, 1),  n, replace = TRUE)
+X[1:10]
+```
+
+We call this a **sampling model** since we are modeling the random behavior of roulette with the sampling of draws from an urn. 
+
+
+Now we can compute the more interesting, the total winnings for the casino, denoted with $S$. This is simply the sum of these 1,000 independent draws:
+
+```{r}
+X <- sample(c(-1,1), n, replace = TRUE, prob=c(9/19, 10/19))
+S <- sum(X)
+S
+```
+
+## The probability distribution of a random variable
+
+The casino wants to know what is the probability they win money
+$$\mbox{Pr(S>0)}$$
+
+```{r}
+n <- 1000
+B <- 10000
+roulette_winnings <- function(n){
+  X <- sample(c(-1,1), n, replace = TRUE, prob=c(9/19, 10/19))
+  sum(X)
+}
+S <- replicate(B, roulette_winnings(n))
+mean(S > 0)
+```
+
+
+We can visualize the distribution of $S$ by creating a histogram showing the probability $F(b)-F(a)$ for several intervals $(a,b]$: 
+
+```{r normal-approximates-distribution, echo=FALSE}
+s <- seq(min(S), max(S), length = 100)
+normal_density <- data.frame(s = s, f=dnorm(s, mean(S), sd(S)))
+data.frame(S=S) |> ggplot(aes(S, ..density..)) +
+  geom_histogram(color = "black", binwidth = 10)  +
+  ylab("Probability") + 
+  geom_line(data = normal_density, mapping=aes(s,f), color="blue")
+```
+
+
+In a probability class you will learn $S$ follows a binomail distribution and that the binomial distribution is approximated with the normal distribution.
