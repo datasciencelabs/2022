@@ -1,0 +1,113 @@
+## Discrete Probability Exercises
+
+1\. One ball will be drawn at random from a box containing: 3 cyan balls, 5 magenta balls, and 7 yellow balls. What is the probability that the ball will be cyan?
+
+
+2\. What is the probability that the ball will not be cyan?
+
+
+3\. Instead of taking just one draw, consider taking two draws. You take the second draw without returning the first draw to the box. We call this sampling **without** replacement. What is the probability that the first draw is cyan and that the second draw is not cyan?
+
+
+4\. Now repeat the experiment, but this time, after taking the first draw and recording the color, return it to the box and shake the box. We call this sampling **with** replacement. What is the probability that the first draw is cyan and that the second draw is not cyan?
+
+
+5\. Two events $A$ and $B$ are independent if $\mbox{Pr}(A \mbox{ and } B) = \mbox{Pr}(A) P(B)$. Under which situation are the draws independent?
+
+a. You don't replace the draw.
+b. You replace the draw.
+c. Neither
+d. Both
+
+6\. Say you’ve drawn 5 balls from the box, with replacement, and all have been yellow. What is the probability that the next one is yellow? 
+
+7\. If you roll a 6-sided die six times, what is the probability of not seeing a 6?
+
+8\. Two teams, say the Celtics and the Cavs, are playing a seven game series. The Cavs are a better team and have a 60% chance of winning each game. What is the probability that the Celtics win **at least** one game?
+
+9\. Create a Monte Carlo simulation to confirm your answer to the previous problem. Use `B <- 10000` simulations. Hint: use the following code to generate the results of the first four games:
+
+```{r, eval=FALSE}
+celtic_wins <- sample(c(0,1), 4, replace = TRUE, prob = c(0.6, 0.4))
+```
+The Celtics must win one of these 4 games.
+
+10\. Two teams, say the Cavs and the Warriors, are playing a seven game championship series. The first to win four games, therefore, wins the series. The teams are equally good so they each have a 50-50 chance of winning each game. If the Cavs lose the first game, what is the probability that they win the series?
+
+11\. Confirm the results of the previous question with a Monte Carlo simulation.
+
+12\. Two teams, $A$ and $B$, are playing a seven game series. Team $A$ is better than team $B$ and has a $p>0.5$ chance of winning each game. Given a value $p$, the probability of winning the series for the underdog team $B$ can be computed with the following function based on a Monte Carlo simulation:
+
+```{r, eval=FALSE}
+prob_win <- function(p){
+  B <- 10000
+  result <- replicate(B, {
+    b_win <- sample(c(1,0), 7, replace = TRUE, prob = c(1-p, p))
+    sum(b_win)>=4
+  })
+  mean(result)
+}
+```
+
+Use the function `sapply` to compute the probability, call it `Pr`, of winning for `p <- seq(0.5, 0.95, 0.025)`. Then plot the result.
+
+13\. Repeat the exercise above, but now keep the probability fixed at `p <- 0.75` and compute the probability for different series lengths: best of 1 game, 3 games, 5 games,... Specifically, `N <- seq(1, 25, 2)`. Hint: use this function:
+
+```{r, eval = FALSE}
+prob_win <- function(N, p=0.75){
+  B <- 10000
+  result <- replicate(B, {
+    b_win <- sample(c(1,0), N, replace = TRUE, prob = c(1-p, p))
+    sum(b_win)>=(N+1)/2
+  })
+  mean(result)
+}
+```
+
+## Continuous Probability Exercises
+
+1\. Assume the distribution of female heights is approximated by a normal distribution with a mean of 64 inches and a standard deviation of 3 inches. If we pick a female at random, what is the probability that she is 5 feet or shorter? 
+
+
+2\. Assume the distribution of female heights is approximated by a normal distribution with a mean of 64 inches and a standard deviation of 3 inches. If we pick a female at random, what is the probability that she is 6 feet or taller? 
+
+
+3\. Assume the distribution of female heights is approximated by a normal distribution with a mean of 64 inches and a standard deviation of 3 inches. If we pick a female at random, what is the probability that she is between 61 and 67 inches?
+
+
+4\. Repeat the exercise above, but convert everything to centimeters. That is, multiply every height, including the standard deviation, by 2.54. What is the answer now?
+
+
+5\. Notice that the answer to the question does not change when you change units. This makes sense since the answer to the question should not be affected by what units we use. In fact, if you look closely, you notice that 61 and 64 are both 1 SD away from the average. Compute the probability that a randomly picked, normally distributed random variable is within 1 SD from the average.
+
+
+6\. To see the math that explains why the answers to questions 3, 4, and 5 are the same, suppose we have a random variable with average $m$ and standard error $s$. Suppose we ask the probability of $X$ being smaller or equal to $a$. Remember that, by definition, $a$ is $(a - m)/s$ standard deviations $s$ away from the average $m$. The probability is: 
+
+$$
+\mbox{Pr}(X \leq a)
+$$
+
+Now we subtract $\mu$ to both sides and then divide both sides by $\sigma$:
+
+$$
+\mbox{Pr}\left(\frac{X-m}{s} \leq \frac{a-m}{s} \right)
+$$
+
+The quantity on the left is a standard normal random variable. It has an average of 0 and a standard error of 1. We will call it $Z$:
+
+
+
+$$
+\mbox{Pr}\left(Z \leq \frac{a-m}{s} \right)
+$$
+
+So, no matter the units, the probability of $X\leq a$ is the same as the probability of a standard normal variable being less than $(a - m)/s$. If `mu` is the average and `sigma` the standard error, which of the following R code would give us the right answer in every situation:
+
+a. `mean(X<=a)`
+b. `pnorm((a - m)/s)`
+c. `pnorm((a - m)/s, m, s)`
+d. `pnorm(a)`
+
+7\. Imagine the distribution of male adults is approximately normal with an expected value of 69 and a standard deviation of 3. How tall is the male in the 99th percentile? Hint: use `qnorm`.
+
+8\. The distribution of IQ scores is approximately normally distributed.  The average is 100 and the standard deviation is 15. Suppose you want to know the distribution of the highest IQ across all graduating classes if 10,000 people are born each in your school district. Run a Monte Carlo simulation with `B=1000` generating 10,000 IQ scores and keeping the highest. Make a histogram.
