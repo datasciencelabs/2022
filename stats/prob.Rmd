@@ -92,26 +92,25 @@ same_birthday <- function(n){
   bdays <- sample(1:365, n, replace=TRUE)
   any(duplicated(bdays))
 }
-results <- replicate(B, same_birthday(50))
+results <- replicate(B, same_birthday(22))
 mean(results)
 ```
 
 
 We can create a look-up table:
 ```{r}
-compute_prob <- function(n, B=10000){
+compute_prob <- function(n, B = 10000){
   results <- replicate(B, same_birthday(n))
   mean(results)
 }
 
-n <- seq(1,60)
+n <- seq(2,60)
 prob <- sapply(n, compute_prob)
 ```
 
 We can now make a plot of the estimated probabilities of two people having the same birthday in a group of size $n$:
 
 ```{r birthday-problem-mc-probabilities, warning=FALSE, message=FALSE}
-library(tidyverse)
 qplot(n, prob)
 ```
 
@@ -142,7 +141,7 @@ We know that the larger $B$, the better the approximation. But how big do we nee
 One practical approach we will describe here is to check for the stability of the estimate. The following is an example with the birthday problem for a group of 25 people. 
 
 ```{r monte-carlo-convergence}
-B <- 10^seq(1, 5, len = 100)
+B <- round(10^seq(1, 5, len = 100))
 compute_prob <- function(B, n=25){
   same_day <- replicate(B, same_birthday(n))
   mean(same_day)
@@ -166,6 +165,7 @@ We used the heights of adult male students as an example
 
 
 ```{r,  message=FALSE, warning=FALSE}
+library(dslabs)
 data(heights)
 x <- heights %>% filter(sex=="Male") %>% pull(height)
 ```
@@ -181,7 +181,7 @@ which, for any value `a`, gives the proportion of values in the list `x` that ar
 Let's connect the eCDF to probability by asking: if I pick one of the male students at random, what is the chance that he is taller than 70.5 inches? Because every student has the same chance of being picked, the answer to this is equivalent to the proportion of students that are taller than 70.5 inches. Using the eCDF we obtain an answer by typing:
 
 ```{r}
-1 - F(70)
+1 - F(70.5)
 ```
 
 The CDF is a version of the eCDF that assigns theoretical probabilities for each $a$ rather than proportions computed from data. 
@@ -263,14 +263,18 @@ pnorm(70.5, m, s) - pnorm(69.5, m, s)
 
 Note how close we get with the normal approximation:
 
-```{r}
-```
 
 However, the approximation is not as useful for other intervals. For instance, notice how the approximation breaks down when we try to estimate:
 
 ```{r}
-mean(x <= 70.9) - mean(x<=70.1)
+mean(x < 71) - mean(x<=70)
 pnorm(70.9, m, s) - pnorm(70.1, m, s)
+```
+
+
+```{r}
+mean(x < 60)
+pnorm(60, m, s) 
 ```
 
 
@@ -401,7 +405,7 @@ $$\mbox{Pr(S>0)}$$
 
 ```{r}
 n <- 1000
-B <- 10000
+B <- 10000 #this is infinity 
 roulette_winnings <- function(n){
   X <- sample(c(-1,1), n, replace = TRUE, prob=c(9/19, 10/19))
   sum(X)
@@ -423,4 +427,4 @@ data.frame(S=S) |> ggplot(aes(S, ..density..)) +
 ```
 
 
-In a probability class you will learn $S$ follows a binomail distribution and that the binomial distribution is approximated with the normal distribution.
+In a probability class you will learn $S$ follows a binomial distribution and that the binomial distribution is approximated with the normal distribution.
