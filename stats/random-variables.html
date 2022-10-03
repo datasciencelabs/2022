@@ -9,7 +9,7 @@
 
 
 
-  <meta name="date" content="2022-10-02" />
+  <meta name="date" content="2022-10-03" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -3208,11 +3208,13 @@ slide:not(.current) .plotly.html-widget{
       <h1 data-config-title><!-- populated from slide_config.json --></h1>
       
       <p data-config-presenter><!-- populated from slide_config.json --></p>
-            <p style="margin-top: 6px; margin-left: -2px;">2022-10-02</p>
+            <p style="margin-top: 6px; margin-left: -2px;">2022-10-03</p>
           </hgroup>
   </slide>
 
-<slide class=""><hgroup><h2>Sample model for betting on red</h2></hgroup><article  id="sample-model-for-betting-on-red">
+<slide class=""><hgroup><h2>Sample model</h2></hgroup><article  id="sample-model">
+
+<p>Sample model for betting on red 1,000 times:</p>
 
 <pre class = 'prettyprint lang-r'>n &lt;- 1000
 X &lt;- sample(c(-1,1), n, replace = TRUE, prob=c(9/19, 10/19))</pre>
@@ -3225,6 +3227,8 @@ S
 #&gt; [1] 88</pre>
 
 </article></slide><slide class=""><hgroup><h2>Probability distribution</h2></hgroup><article  id="probability-distribution">
+
+<p>Probability distribution for total winnings \(S\):</p>
 
 <pre class = 'prettyprint lang-r'>n &lt;- 1000
 B &lt;- 10000

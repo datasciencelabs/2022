@@ -40,8 +40,9 @@ set.seed(1)
 
 
 
-## Sample model for betting on red
+## Sample model
 
+Sample model for betting on red 1,000 times:
 
 ```{r}
 n <- 1000
@@ -58,6 +59,8 @@ S
 
 
 ## Probability distribution 
+
+Probability distribution for total winnings $S$: 
 
 ```{r}
 n <- 1000
