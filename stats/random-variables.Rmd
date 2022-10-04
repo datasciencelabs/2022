@@ -360,6 +360,7 @@ $$
 \mu = \frac{1}{n} \sum_{i=1}^n x_i \\
 \sigma =  \sqrt{\frac{1}{n} \sum_{i=1}^n (x_i - \mu)^2}
 $$
+
 ##  Technical note: population SD versus the sample SD
 
 * However, be aware that the `sd` function returns a slightly different result:
@@ -386,6 +387,7 @@ $$
 n <- length(x)
 s-sd(x)*sqrt((n-1) / n)
 ```
+
 ##  Technical note: population SD versus the sample SD
 
 For all the theory discussed here, you need to compute the actual standard deviation as defined:

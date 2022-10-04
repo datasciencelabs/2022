@@ -1,0 +1,345 @@
+---
+title: "Confidence intervals and p-values"
+author: "Rafael A. Irizarry"
+date: "`r lubridate::today()`"
+output:
+  ioslides_presentation:
+    fig_caption: no
+    fig_height: 5
+    fig_width: 7
+    out_width: "70%"
+  beamer_presentation: default
+  slidy_presentation: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(dslabs)
+library(gridExtra)
+library(ggthemes)
+ds_theme_set()
+options(digits = 3)
+knitr::opts_chunk$set(
+  comment = "#>",
+  collapse = TRUE,
+  cache = TRUE,
+  out.width = "70%",
+  fig.align = 'center',
+  fig.width = 6,
+  fig.asp = 0.618,  # 1 / phi
+  fig.show = "hold"
+)
+img_path <- "img"
+```
+
+## Confidence intervals
+
+-   Confidence intervals are a very useful concept widely employed by data analysts.
+
+-   A version of these that are commonly seen come from the `ggplot` geometry `geom_smooth`. Here is an example using a temperature dataset available in R:
+
+```{r first-confidence-intervals-example, warning=FALSE, message=FALSE, echo=FALSE}
+library(tidyverse)
+data("nhtemp")
+data.frame(year = as.numeric(time(nhtemp)), temperature=as.numeric(nhtemp)) |>
+  ggplot(aes(year, temperature)) + 
+  geom_point() + 
+  geom_smooth() + 
+  ggtitle("Average Yearly Temperatures in New Haven")
+```
+
+## Confidence intervals
+
+-   When we talk about Machine Learning, we will learn how the curve shown is obtained, but for now consider the shaded area around the curve.
+
+-   This is created using the concept of confidence intervals.
+
+## Confidence intervals
+
+-   In our competition, you were asked to give an interval.
+
+-   One way to pass to the second round is to report a very large interval: e.g the interval $[0,1]$ is guaranteed to include $p$.
+
+-   However, with an interval this big, we have no chance of winning the competition.
+
+-   Similarly, if you are an election forecaster and predict the spread will be between -100% and 100%, you will be ridiculed for stating the obvious.
+
+-   Even a smaller interval, such as saying the spread will be between -10% and 10%, will not be considered serious.
+
+## Confidence intervals
+
+-   On the other hand, the smaller the interval we report, the smaller our chances are of winning the prize.
+
+-   Likewise, a bold pollster that reports very small intervals and misses the mark most of the time will not be considered a good pollster.
+
+-   Statistics helps us control where we fall in this spectrum.
+
+## Confidence intervals
+
+-   We can use the statistical theory we have learned to compute the probability of any given interval including $p$.
+
+-   If we are asked to create an interval with, say, a 95% chance of including $p$, we can do that as well.
+
+-   These are called 95% confidence intervals.
+
+## Confidence intervals
+
+-   When a pollster reports an estimate and a margin of error, they are, in a way, reporting a 95% confidence interval.
+
+-   Let's show how this works mathematically.
+
+## Confidence intervals
+
+-   What is the probability that $[\bar{X} - 2\hat{\mbox{SE}}(\bar{X}), \bar{X} + 2\hat{\mbox{SE}}(\bar{X})]$ contains the true proportion $p$?
+
+-   First, consider that the start and end of these intervals are random variables: every time we take a sample, they change.
+
+-   To illustrate this, let's run a Monte Carlo simulation.
+
+## Confidence intervals
+
+```{r}
+p <- 0.45
+N <- 1000
+```
+
+-   Run the following code over and over to see that the interval is random
+
+```{r}
+options(digits=2)
+x <- sample(c(0, 1), size = N, replace = TRUE, prob = c(1-p, p))
+x_hat <- mean(x)
+se_hat <- sqrt(x_hat * (1 - x_hat) / N)
+c(x_hat - 2 * se_hat, x_hat + 2 * se_hat) 
+```
+
+## Reset digits
+
+```{r}
+options(digits=3)
+```
+
+## Confidence intervals
+
+-   To determine the probability that the interval includes $p$, we need to compute this:
+
+$$
+\mbox{Pr}\left([ \bar{X} - 2\,\hat{\mbox{SE}}(\bar{X}), \bar{X} + 2\,\hat{\mbox{SE}}(\bar{X})] \mbox{ covers }p\right)
+$$
+
+-   We can write this as a mathematical formula:
+
+$$
+\mbox{Pr}\left( \bar{X} - 2\,\hat{\mbox{SE}}(\bar{X}) \leq p \leq \bar{X} + 2\,\hat{\mbox{SE}}(\bar{X}) \right)
+$$
+
+## Confidence intervals
+
+-   By subtracting and dividing the same quantities in all parts of the equation, we get:
+
+$$
+\mbox{Pr}\left(-2 \leq \frac{\bar{X}- p}{\hat{\mbox{SE}}(\bar{X})} \leq  2\right)
+$$
+
+-   The term in the middle is an approximately normal random variable with expected value 0 and standard error 1.
+-   Let's call it $Z$ and rewrite it as:
+
+$$
+\mbox{Pr}\left(-2 \leq Z \leq  2\right)
+$$
+
+## Confidence intervals
+
+-   We can compute $$\mbox{Pr}\left(-2 \leq Z \leq  2\right)$$
+
+using
+
+```{r}
+pnorm(2) - pnorm(-2)
+```
+
+-   so the probability is 95%.
+
+-   Technical note: to get exactly 95% we need to use 1.96 instead of 2.
+
+## Confidence intervals
+
+-   If we want to have a larger probability, say 99%, we need to multiply by whatever `z` satisfies the following:
+
+$$
+\mbox{Pr}\left(-z \leq Z \leq  z\right) = 0.99
+$$
+
+-   Using:
+
+```{r}
+z <- qnorm(0.995)
+z
+```
+
+-   to confirm:
+
+```{r}
+pnorm(z) - pnorm(-z)
+```
+
+## Confidence intervals
+
+-   We can use this approach for any probability $1-\alpha$: we set
+
+`z = qnorm(1 - alpha/2)`
+
+because
+
+$$1 - \alpha/2 - \alpha/2 = 1-\alpha$$
+
+## Confidence intervals
+
+So, for example, for $\alpha=0.05$, $1 -\alpha/2 = 0.975$ and we get the 1.96 we have been using:
+
+```{r}
+qnorm(0.975)
+```
+
+## A Monte Carlo simulation
+
+-   We can run a Monte Carlo simulation to confirm that, in fact, a 95% confidence interval includes $p$ 95% of the time.
+
+```{r, echo=FALSE}
+set.seed(1)
+```
+
+```{r}
+N <- 1000
+B <- 10000
+inside <- replicate(B, {
+  x <- sample(c(0,1), size = N, replace = TRUE, prob = c(1-p, p))
+  x_hat <- mean(x)
+  se_hat <- sqrt(x_hat * (1 - x_hat) / N)
+  between(p, x_hat - 1.96 * se_hat, x_hat + 1.96 * se_hat)
+})
+mean(inside)
+```
+
+## A Monte Carlo simulation
+
+-   The following plot shows the first 100 confidence intervals.
+
+```{r confidence-interval-coverage, message=FALSE, echo=FALSE, fig.height=6}
+set.seed(1)
+tab <- replicate(100, {
+  x <- sample(c(0,1), size = N, replace = TRUE, prob = c(1-p, p))
+  x_hat <- mean(x)
+  se_hat <- sqrt(x_hat * (1 - x_hat) / N)
+  hit <- between(p, x_hat - 1.96 * se_hat, x_hat + 1.96 * se_hat)
+  c(x_hat, x_hat - 1.96 * se_hat, x_hat + 2 * se_hat, hit)
+})
+
+tab <- data.frame(poll=1:ncol(tab), t(tab))
+names(tab)<-c("poll", "estimate", "low", "high", "hit")
+tab <- mutate(tab, p_inside = ifelse(hit, "Yes", "No") )
+ggplot(tab, aes(poll, estimate, ymin=low, ymax=high, col = p_inside)) + 
+  geom_point()+
+  geom_errorbar() + 
+  coord_flip() + 
+  geom_hline(yintercept = p)
+```
+
+## The correct language
+
+-   When using the theory we described above, it is important to remember that it is the intervals that are random, not $p$.
+
+-   In the plot above, we can see the random intervals moving around and $p$, represented with the vertical line, staying in the same place.
+
+-   The proportion of blue in the urn $p$ is not. So the 95% relates to the probability that this random interval falls on top of $p$.
+
+-   Saying the $p$ has a 95% chance of being between this and that is technically an incorrect statement because $p$ is not random.
+
+## Power
+
+-   Pollsters are not successful at providing correct confidence intervals, but rather at predicting who will win.
+
+-   When we took a 25 bead sample size, the confidence interval for the spread is:
+
+```{r}
+N <- 25
+x_hat <- 0.48
+(2 * x_hat - 1) + c(-1.96, 1.96) * 2 * 
+  sqrt(x_hat * (1 - x_hat) / N)
+```
+
+-   If this were a poll and we were forced to make a declaration, we would have to say it was a "toss-up".
+
+## Power
+
+-   A problem with our poll results is that given the sample size and the value of $p$, we would have to sacrifice on the probability of an incorrect call to create an interval that does not include 0.
+
+-   This does not mean that the election is close.
+
+-   It only means that we have a small sample size.
+
+-   In statistical textbooks this is called lack of *power*. In the context of polls, *power* is the probability of detecting spreads different from 0.
+
+-   By increasing our sample size, we lower our standard error and therefore have a much better chance of detecting the direction of the spread.
+
+## p-values
+
+-   p-values are ubiquitous in the scientific literature. They are related to confidence intervals so we introduce the concept here.
+
+-   Let's consider the blue and red beads.
+
+-   Suppose that rather than wanting an estimate of the spread or the proportion of blue, I am interested only in the question: are there more blue beads or red beads?
+
+-   I want to know if the spread or, equivalently, if $p > 0.5$.
+
+## p-values
+
+-   Say we take a random sample of $N=100$ and we observe $52$ blue beads, which gives us $\bar{X} = 0.52$.
+
+-   This seems to be pointing to the existence of more blue than red beads since 0.52 is larger than 0.5. However, as data scientists we need to be skeptical.
+
+-   We know there is chance involved in this process and we could get a 52 even when the actual spread is 0.
+
+-   We call the assumption that the spread is $p = 0.5$ a *null hypothesis*.
+
+## p-values
+
+-   The null hypothesis is the skeptic's hypothesis. We have observed a random variable $\bar{X} = 0.52$ and the p-value is the answer to the question: how likely is it to see a value this large, when the null hypothesis is true?
+
+-   So we write:
+
+$$\mbox{Pr}(\mid \bar{X} - 0.5 \mid > 0.02 ) $$
+
+-   assuming the $p=0.5$. Under the null hypothesis we know that:
+
+$$
+\sqrt{N}\frac{\bar{X} - 0.5}{\sqrt{0.5(1-0.5)}}
+$$
+
+is standard normal.
+
+## p-values
+
+-   We therefore can compute the probability above, which is the p-value.
+
+$$\mbox{Pr}\left(\sqrt{N}\frac{\mid \bar{X} - 0.5\mid}{\sqrt{0.5(1-0.5)}} > \sqrt{N} \frac{0.02}{ \sqrt{0.5(1-0.5)}}\right)$$
+
+```{r}
+N <- 100
+z <- sqrt(N)*0.02/0.5
+1 - (pnorm(z) - pnorm(-z))
+```
+
+-   In this case, there is actually a large chance of seeing 52 or larger under the null hypothesis.
+
+## p-values
+
+-   Keep in mind that there is a close connection between p-values and confidence intervals.
+
+-   If a 95% confidence interval of the spread does not include 0, we know that the p-value must be smaller than 0.05.
+
+-   To learn more about p-values, you can consult any statistics textbook.
+
+-   However, in general, we prefer reporting confidence intervals over p-values since it gives us an idea of the size of the estimate.
+
+-   If we just report the p-value we provide no information about the significance of the finding in the context of the problem.
