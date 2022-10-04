@@ -50,8 +50,6 @@ polls <- polls_us_election_2016 |>
   mutate(d_hat = rawpoll_clinton / 100 - rawpoll_trump / 100)
 ```
 
-
-
 7\. Now repeat exercise 3, but for the difference.
 
 
