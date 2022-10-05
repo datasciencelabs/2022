@@ -270,7 +270,7 @@ $$\bar{X} = 1/N \times \sum_{i=1}^N X_i$$
 
 -   Since our main goal is figuring out what is $p$, we are going to *estimate this parameter*.
 
-## Parameters
+## Other application
 
 -   The ideas presented here on how we estimate parameters, and provide insights into how good these estimates are, extrapolate to many data science tasks.
 
@@ -375,6 +375,3 @@ or 1.5 percentage points.
 
 -   So even with large polls, for close elections, $\bar{X}$ can lead us astray if we don't realize it is a random variable.
 -   Nonetheless, we can actually say more about how close we get to the $p$.
-
-
-
