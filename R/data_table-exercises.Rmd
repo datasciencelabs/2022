@@ -1,0 +1,103 @@
+# data.table {#data.table}
+
+## Manipulating data tables
+
+
+## Exercises 
+
+1\. Load the __data.table__ package and the murders dataset and convert it to `data.table` object:
+
+```{r, eval=FALSE}
+library(data.table)
+library(dslabs)
+data(murders)
+murders <- setDT(murders)
+```
+
+Remember you can add columns like this:
+
+
+```{r, eval=FALSE}
+murders[, population_in_millions := population / 10^6]
+```
+
+
+Add a murders column named `rate` with the per 100,000 murder rate as in the example code above.
+
+2\. Add a column `rank` containing the rank, from highest to lowest murder rate. 
+
+
+3\. If we want to only show the states and population sizes, we can use:
+
+```{r, eval=FALSE}
+murders[, .(state, population)] 
+```
+
+Show the state names and abbreviations in `murders`. 
+
+4\. You can show just the New York row like this:
+
+```{r, eval=FALSE}
+murders[state == "New York"]
+```
+
+You can use other logical vectors to filter rows.
+
+Show the top 5 states with the highest murder rates. After we add murder rate and rank, do not change the murders dataset, just show the result. Remember that you can filter based on the `rank` column.
+
+ 
+5\. We can remove rows using the `!=` operator. For example, to remove Florida, we would do this:
+
+```{r, eval=FALSE}
+no_florida <- murders[state != "Florida"]
+```
+
+Create a new data frame called `no_south` that removes states from the South region. How many states are in this category? You can use the function `nrow` for this.
+
+
+6\. We can also use `%in%` to filter. You can therefore see the data from New York and Texas as follows:
+
+```{r, eval=FALSE}
+murders[state %in% c("New York", "Texas")]
+```
+
+Create a new data frame called `murders_nw` with only the states from the Northeast and the West. How many states are in this category? 
+
+
+7\. Suppose you want to live in the Northeast or West **and** want the murder rate to be less than 1. We want to see the data for the states satisfying these options. Note that you can use logical operators with `filter`. Here is an example in which we filter to keep only small states in the Northeast region.
+
+```{r, eval=FALSE}
+murders[population < 5000000 & region == "Northeast"]
+```
+
+Make sure `murders` has been defined with `rate` and `rank` and still has all states. Create a table called `my_states` that contains rows for states satisfying both the conditions: they are in the Northeast or West and the murder rate is less than 1.  Show only the state name, the rate, and the rank.
+
+
+
+## Summarizing data & Sorting data frames
+
+
+## Exercises 
+
+For these exercises, we will be using the __NHANES__ data.
+
+```{r, eval=FALSE}
+library(NHANES)
+data(NHANES)
+```
+
+1\. We will provide some basic facts about blood pressure. First let's select a group to set the standard. We will use 20-to-29-year-old females. `AgeDecade` is a categorical variable with these ages. Note that the category is coded like " 20-29", with a space in front! Use the __data.table__ package to compute the average and standard deviation of systolic blood pressure as saved in the `BPSysAve` variable. Save it to a variable called `ref`.
+
+
+
+2\. Report the min and max values for the same group.
+
+
+3\. Compute the average and standard deviation for females, but for each age group separately rather than a selected decade as in question 1. Note that the age groups are defined by `AgeDecade`. 
+
+4\. Repeat exercise 3 for males. 
+
+
+5\. For males between the ages of 40-49, compare systolic blood pressure across race as reported in the `Race1` variable. Order the resulting table from lowest to highest average systolic blood pressure.
+
+
