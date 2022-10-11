@@ -9,7 +9,7 @@
 
 
 
-  <meta name="date" content="2022-10-04" />
+  <meta name="date" content="2022-10-11" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -3208,11 +3208,25 @@ slide:not(.current) .plotly.html-widget{
       <h1 data-config-title><!-- populated from slide_config.json --></h1>
       
       <p data-config-presenter><!-- populated from slide_config.json --></p>
-            <p style="margin-top: 6px; margin-left: -2px;">2022-10-04</p>
+            <p style="margin-top: 6px; margin-left: -2px;">2022-10-11</p>
           </hgroup>
   </slide>
 
-<slide class=""><hgroup><h2>Statistical models</h2></hgroup><article  id="statistical-models">
+<slide class=""><hgroup><h2>Introduction</h2></hgroup><article  id="introduction">
+
+<p>Let’s start by looking at the data from the contest:</p>
+
+<pre class = 'prettyprint lang-r'>dat &lt;- read_csv(&quot;https://docs.google.com/spreadsheets/d/e/2PACX-1vRMVT2B6_oOQiUgoYrf2wevSCgr618BU_IuR8C4qKRXjQu0mjkO4qHBPjyZMk2tRChCKJTLggLEorvP/pub?output=csv&quot;)
+#&gt; Rows: 26 Columns: 5
+#&gt; ── Column specification ────────────────────────────────────────────────────────
+#&gt; Delimiter: &quot;,&quot;
+#&gt; chr (1): timestamp
+#&gt; dbl (4): N, estimate, lower, upper
+#&gt; 
+#&gt; ℹ Use `spec()` to retrieve the full column specification for this data.
+#&gt; ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</pre>
+
+</article></slide><slide class=""><hgroup><h2>Statistical models</h2></hgroup><article  id="statistical-models">
 
 <blockquote>
 <blockquote>
@@ -3280,7 +3294,7 @@ slide:not(.current) .plotly.html-widget{
 </article></slide><slide class=""><hgroup><h2>Statistical models</h2></hgroup><article  id="statistical-models-5">
 
 <ul>
-<li><p>We motivate the models, building on the statistical inference concepts we learned.</p></li>
+<li><p>We motivate the models building on the statistical inference concepts we learned.</p></li>
 <li><p>We start with relatively simple models, realizing that the actual data science exercise of forecasting elections involves rather complex ones, which we introduce towards later.</p></li>
 </ul>
 

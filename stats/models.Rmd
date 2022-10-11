@@ -36,19 +36,19 @@ img_path <- "img"
 
 Let's start by looking at the data from the contest:
 
-```{r}
+```{r, eval=FALSE}
 dat <- read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRMVT2B6_oOQiUgoYrf2wevSCgr618BU_IuR8C4qKRXjQu0mjkO4qHBPjyZMk2tRChCKJTLggLEorvP/pub?output=csv")
 ```
 
 ## Statistical models
 
-> > "All models are wrong, but some are useful." --George E. P. Box
+>> "All models are wrong, but some are useful." --George E. P. Box
 
 ## Statistical models
 
 -   The day before the 2008 presidential election, FiveThirtyEight stated that
 
-> > Barack Obama appears poised for a decisive electoral victory.
+>> Barack Obama appears poised for a decisive electoral victory.
 
 -   They went further and predicted that Obama would win the election with 349 electoral votes to 189, and the popular vote by a margin of 6.1%.
 
@@ -62,11 +62,11 @@ dat <- read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRMVT2B6_oOQiUg
 
 -   Political commentator Joe Scarborough said during his [show](https://www.youtube.com/watch?v=TbKkjm-gheY):
 
-> > Anybody that thinks that this race is anything but a toss-up right now is such an ideologue ... they're jokes.
+>> Anybody that thinks that this race is anything but a toss-up right now is such an ideologue ... they're jokes.
 
 -   To which Nate Silver responded via Twitter:
 
-> > If you think it's a toss-up, let's bet. If Obama wins, you donate \$1,000 to the American Red Cross. If Romney wins, I do. Deal?
+>> If you think it's a toss-up, let's bet. If Obama wins, you donate \$1,000 to the American Red Cross. If Romney wins, I do. Deal?
 
 ## Statistical models
 
@@ -210,7 +210,7 @@ ggplot(polls2, aes(poll, estimate, ymin=low, ymax=high, color=col)) +
 
 -   Of course, this was just a simulation to illustrate the idea.
 
--   The actual data science exercise of forecasting elections is much more complicated and it involves modeling.
+-   The actual real-world exercise of forecasting elections is much more complicated and it involves modeling.
 
 -   Below we explain how pollsters fit multilevel models to the data and use this to forecast election results.
 
