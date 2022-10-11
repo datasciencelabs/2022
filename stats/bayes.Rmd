@@ -1,0 +1,401 @@
+---
+title: "Bayes"
+author: "Rafael A. Irizarry"
+date: "`r lubridate::today()`"
+output:
+  ioslides_presentation:
+    fig_caption: no
+    fig_height: 5
+    fig_width: 7
+    out_width: "70%"
+  beamer_presentation: default
+  slidy_presentation: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(dslabs)
+library(gridExtra)
+library(ggthemes)
+ds_theme_set()
+options(digits = 3)
+knitr::opts_chunk$set(
+  comment = "#>",
+  collapse = TRUE,
+  cache = TRUE,
+  out.width = "70%",
+  fig.align = "center",
+  fig.width = 6,
+  fig.asp = 0.618,  # 1 / phi
+  fig.show = "hold"
+)
+
+img_path <- "img"
+```
+
+## Bayesian statistics
+
+-   What does it mean when an election forecaster tells us that a given candidate has a 90% chance of winning? In the context of the urn model, this would be equivalent to stating that the probability $p>0.5$ is 90%.
+
+-   However, as we discussed earlier, in the urn model $p$ is a fixed parameter and it does not make sense to talk about probability.
+
+-   With Bayesian statistics, we model $p$ as random variable and thus a statement such as "90% chance of winning" is consistent with the approach.
+
+## Bayesian statistics
+
+-   Forecasters also use models to describe variability at different levels.
+
+-   For example, sampling variability, pollster to pollster variability, day to day variability, and election to election variability.
+
+-   One of the most successful approaches used for this are hierarchical models, which can be explained in the context of Bayesian statistics.
+
+-   In this chapter we briefly describe Bayesian statistics.
+
+## Bayesian statistics
+
+-   For an in-depth treatment of this topic we recommend one of the following textbooks:
+
+    1.  Berger JO (1985). Statistical Decision Theory and Bayesian Analysis, 2nd edition. Springer-Verlag.
+
+    2.  Lee PM (1989). Bayesian Statistics: An Introduction. Oxford.
+
+## Bayes theorem
+
+-   We start by describing Bayes theorem.
+
+-   We do this using a hypothetical cystic fibrosis test as an example.
+
+-   Suppose a test for cystic fibrosis has an accuracy of 99%.
+
+-   We will use the following notation:
+
+$$
+\mbox{Prob}(+ \mid D=1)=0.99, \mbox{Prob}(- \mid D=0)=0.99  
+$$
+
+-   with $+$ meaning a positive test and $D$ representing if you actually have the disease (1) or not (0).
+
+## Bayes theorem
+
+-   Suppose we select a random person and they test positive.
+
+-   What is the probability that they have the disease? We write this as $\mbox{Prob}(D=1 \mid +)?$ The cystic fibrosis rate is 1 in 3,900 which implies that $\mbox{Prob}(D=1)=0.00025$.
+
+-   To answer this question, we will use Bayes theorem, which in general tells us that:
+
+$$
+\mbox{Pr}(A \mid B)  =  \frac{\mbox{Pr}(B \mid A)\mbox{Pr}(A)}{\mbox{Pr}(B)}  
+$$
+
+## Bayes theorem
+
+-   This equation applied to our problem becomes:
+
+$$
+\begin{aligned} 
+& \mbox{Pr}(D=1 \mid +) =  \frac{ P(+ \mid D=1)  P(D=1)} {\mbox{Pr}(+)} \\ 
+& =  \frac{\mbox{Pr}(+ \mid D=1) P(D=1)} {\mbox{Pr}(+ \mid D=1)  P(D=1) + \mbox{Pr}(+ \mid D=0) \mbox{Pr}(D=0)}  
+\end{aligned} 
+$$
+
+-   Plugging in the numbers we get:
+
+$$
+\frac{0.99 \cdot 0.00025}{0.99 \cdot 0.00025 + 0.01 \cdot (.99975)}  =  0.02  
+$$
+
+## Bayes theorem
+
+-   This says that despite the test having 0.99 accuracy, the probability of having the disease given a positive test is only 0.02.
+
+-   This may appear counter-intuitive to some, but the reason this is the case is because we have to factor in the very rare probability that a person, chosen at random, has the disease.
+
+-   To illustrate this, we run a Monte Carlo simulation.
+
+## Bayes theorem simulation
+
+-   The following simulation is meant to help you visualize Bayes theorem.
+
+-   We start by randomly selecting 100.000 people from a population in which the disease in question has a 1 in 4.000 prevalence.
+
+```{r, echo=FALSE}
+set.seed(3) 
+```
+
+```{r}
+prev <- 0.00025 
+N <- 100000 
+outcome <- sample(c("Disease","Healthy"), N, replace = TRUE,  
+                  prob = c(prev, 1 - prev)) 
+```
+
+## Bayes theorem
+
+-   Note that there are very few people with the disease:
+
+```{r}
+N_D <- sum(outcome == "Disease") 
+N_D 
+N_H <- sum(outcome == "Healthy") 
+N_H 
+```
+
+-   Also, there are many without the disease, which makes it more probable that we will see some false positives given that the test is not perfect.
+
+## Bayes theorem
+
+-   Now each person gets the test, which is correct 99% of the time:
+
+```{r}
+accuracy <- 0.99 
+test <- vector("character", N) 
+test[outcome == "Disease"]  <- sample(c("+", "-"), N_D, 
+                                      replace = TRUE,  
+                                      prob = c(accuracy, 1-accuracy)) 
+
+test[outcome == "Healthy"]  <- sample(c("-", "+"), N_H, 
+                                      replace = TRUE,  
+                                      prob = c(accuracy, 1-accuracy)) 
+```
+
+## Bayes theorem simulation
+
+-   Because there are so many more controls than cases, even with a low false positive rate we get more controls than cases in the group that tested positive:
+
+```{r}
+table(outcome, test) 
+```
+
+## Bayes theorem
+
+-   From this table, we see that the proportion of positive tests that have the disease is `r sum(test=="+" & outcome=="Disease")` out of `r sum(test=="+")`.
+
+-   We can run this over and over again to see that, in fact, the probability converges to about 0.022.
+
+## Bayes in practice
+
+-   José Iglesias is a professional baseball player.
+
+-   In April 2013, when he was starting his career, he was performing rather well:
+
+| Month | At Bats | H   | AVG  |
+|-------|---------|-----|------|
+| April | 20      | 9   | .450 |
+
+-   The batting average (`AVG`) statistic is one way of measuring success.
+
+-   Roughly speaking, it tells us the success rate when batting.
+
+## Bayes in practice
+
+-   An `AVG` of .450 means José has been successful 45% of the times he has batted (`At Bats`) which is rather high, historically speaking.
+
+-   Keep in mind that no one has finished a season with an `AVG` of .400 or more since Ted Williams did it in 1941! To illustrate the way hierarchical models are powerful, we will try to predict José's batting average at the end of the season.
+
+-   Note that in a typical season, players have about 500 at bats.
+
+-   With the techniques we have learned up to now, referred to as *frequentist techniques*, the best we can do is provide a confidence interval.
+
+## Bayes in practice
+
+-   We can think of outcomes from hitting as a binomial with a success rate of $p$.
+
+-   So if the success rate is indeed .450, the standard error of just 20 at bats is:
+
+$$
+\sqrt{\frac{.450 (1-.450)}{20}}=.111 
+$$
+
+-   This means that our confidence interval is $.450 - .222$ to $.450 + .222$ or $.228$ to $.672$.
+
+-   This prediction has two problems.
+
+-   First, it is very large, so not very useful.
+
+## Bayes in practice
+
+-   Second, it is centered at .450, which implies that our best guess is that this new player will break Ted Williams' record.
+
+-   If you follow baseball, this last statement will seem wrong and this is because you are implicitly using a hierarchical model that factors in information from years of following baseball.
+
+-   Here we show how we can quantify this intuition.
+
+-   First, let's explore the distribution of batting averages for all players with more than 500 at bats during the previous three seasons:
+
+## Bayes in practice
+
+```{r batting-averages-histogram, echo=FALSE, out.width="100%", fig.height=3, message=FALSE, warning=FALSE}
+library(tidyverse) 
+library(Lahman) 
+filter(Batting, yearID %in% 2010:2012) |>  
+  mutate(AVG = H/AB) |>  
+  filter(AB > 500) |>  
+  ggplot(aes(AVG)) + 
+  geom_histogram(color="black", binwidth = .01) + 
+  facet_wrap( ~ yearID) 
+```
+
+## Bayes in practice
+
+-   The average player had an `AVG` of .275 and the standard deviation of the population of players was 0.027.
+
+-   So we can see already that .450 would be quite an anomaly since it is over six standard deviations away from the mean.
+
+-   So is José lucky or is he the best batter seen in the last 50 years? Perhaps it's a combination of both luck and talent.
+
+-   But how much of each? If we become convinced that he is lucky, we should trade him to a team that trusts the .450 observation and is maybe overestimating his potential.
+
+## Hierarchical models
+
+-   The hierarchical model provides a mathematical description of how we came to see the observation of .450.
+
+-   First, we pick a player at random with an intrinsic ability summarized by, for example, $p$.
+
+-   Then we see 20 random outcomes with success probability $p$.
+
+-   We use a model to represent two levels of variability in our data.
+
+-   First, each player is assigned a natural ability to hit.
+
+-   We will use the symbol $p$ to represent this ability.
+
+-   You can think of $p$ as the batting average you would converge to if this particular player batted over and over again.
+
+## Hierarchical models
+
+-   Based on the plots we showed earlier, we assume that $p$ has a normal distribution.
+
+-   With expected value .270 and standard error 0.027.
+
+-   Now the second level of variability has to do with luck when batting.
+
+-   Regardless of how good the player is, sometimes you have bad luck and sometimes you have good luck.
+
+-   At each at bat, this player has a probability of success $p$.
+
+-   If we add up these successes and failures, then the CLT tells us that the observed average, call it $Y$, has a normal distribution with expected value $p$ and standard error $\sqrt{p(1-p)/N}$ with $N$ the number of at bats.
+
+## Hierarchical models
+
+-   Statistical textbooks will write the model like this:
+
+$$
+\begin{aligned} 
+p &\sim N(\mu, \tau^2) \\ 
+Y \mid p &\sim N(p, \sigma^2)  
+\end{aligned} 
+$$
+
+-   Here the $\sim$ symbol tells us the random variable on the left of the symbol follows the distribution on the right and $N(a,b^2)$ represents the normal distribution with mean $a$ and standard deviation $b$.
+
+## Hierarchical models
+
+-   The $\mid$ is read as *conditioned on*, and it means that we are treating the random variable to the right of the symbol as known.
+
+-   We refer to the model as hierarchical because we need to know $p$, the first level, in order to model $Y$, the second level.
+
+-   In our example the first level describes randomness in assigning talent to a player and the second describes randomness in this particular player's performance once we have fixed the talent parameter.
+
+-   In a Bayesian framework, the first level is called a *prior distribution* and the second the *sampling distribution*.
+
+## Hierarchical models
+
+-   The data analysis we have conducted here suggests that we set $\mu = .270$, $\tau = 0.027$, and $\sigma^2 = p(1-p)/N$.
+
+-   Now, let's use this model for José's data.
+
+-   Suppose we want to predict his innate ability in the form of his *true* batting average $p$.
+
+-   This would be the hierarchical model for our data:
+
+$$
+\begin{aligned} 
+p &\sim N(.275, .027^2) \\ 
+Y \mid p &\sim N(p, .111^2)  
+\end{aligned} 
+$$
+
+## Hierarchical models
+
+-   We now are ready to compute a posterior distribution to summarize our prediction of $p$.
+
+-   The continuous version of Bayes' rule can be used here to derive the *posterior probability function*, which is the distribution of $p$ assuming we observe $Y=y$.
+
+-   In our case, we can show that when we fix $Y=y$, $p$ follows a normal distribution with expected value:
+
+$$
+\begin{aligned} 
+\mbox{E}(p \mid Y=y) &= B \mu + (1-B) y\\ 
+&= \mu + (1-B)(y-\mu)\\ 
+\mbox{with } B &= \frac{\sigma^2}{\sigma^2+\tau^2} 
+\end{aligned} 
+$$
+
+## Hierarchical models
+
+-   This is a weighted average of the population average $\mu$ and the observed data $y$.
+
+-   The weight depends on the SD of the population $\tau$ and the SD of our observed data $\sigma$.
+
+-   This weighted average is sometimes referred to as *shrinking* because it *shrinks* estimates towards a prior mean.
+
+
+## Hierarchical models
+
+-   In the case of José Iglesias, we have:
+
+$$
+\begin{aligned} 
+\mbox{E}(p \mid Y=.450) &= B \times .275 + (1 - B) \times .450 \\ 
+&= .275 + (1 - B)(.450 - .275) \\ 
+B &=\frac{.111^2}{.111^2 + .027^2} = 0.944\\ 
+\mbox{E}(p \mid Y=450) &\approx .285 
+\end{aligned} 
+$$
+
+-   We do not show the derivation here, but the standard error can be shown to be:
+
+## Hierarchical models
+
+$$
+\mbox{SE}(p\mid y)^2 = \frac{1}{1/\sigma^2+1/\tau^2} 
+= \frac{1}{1/.111^2 + 1/.027^2} = 0.00069 
+$$
+
+-   and the standard deviation is therefore $0.026$.
+
+-   So we started with a frequentist 95% confidence interval that ignored data from other players and summarized just José's data: .450 $\pm$ 0.220.
+
+-   Then we used a Bayesian approach that incorporated data from other players and other years to obtain a posterior probability.
+
+## Hierarchical models
+
+-   This is actually referred to as an empirical Bayes approach because we used data to construct the prior.
+
+-   From the posterior, we can report what is called a 95% *credible interval* by reporting a region, centered at the mean, with a 95% chance of occurring.
+
+-   In our case, this turns out to be: .285 $\pm$ 0.052.
+
+-   The Bayesian credible interval suggests that if another team is impressed by the .450 observation, we should consider trading José as we are predicting he will be just slightly above average.
+
+-   Interestingly, the Red Sox traded José to the Detroit Tigers in July.
+
+## Hierarchical models
+
+-   José Iglesias batting averages for the next 5 months:
+
+| Month           | At Bat | Hits | AVG  |
+|-----------------|--------|------|------|
+| April           | 20     | 9    | .450 |
+| May             | 26     | 11   | .423 |
+| June            | 86     | 34   | .395 |
+| July            | 83     | 17   | .205 |
+| August          | 85     | 25   | .294 |
+| September       | 50     | 10   | .200 |
+| Total w/o April | 330    | 97   | .293 |
+
+## Hierarchical models
+
+-   Although both intervals included the final batting average, the Bayesian credible interval provided a much more precise prediction.
+
+-   In particular, it predicted that he would not be as good during the remainder of the season.
