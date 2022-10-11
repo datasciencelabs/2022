@@ -12,7 +12,6 @@ output:
   slidy_presentation: default
 ---
 
-
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(dslabs)
@@ -33,10 +32,17 @@ knitr::opts_chunk$set(
 img_path <- "img"
 ```
 
+## Introduction
+
+Let's start by looking at the data from the contest:
+
+```{r}
+dat <- read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRMVT2B6_oOQiUgoYrf2wevSCgr618BU_IuR8C4qKRXjQu0mjkO4qHBPjyZMk2tRChCKJTLggLEorvP/pub?output=csv")
+```
+
 ## Statistical models
 
 > > "All models are wrong, but some are useful." --George E. P. Box
-
 
 ## Statistical models
 
@@ -80,7 +86,7 @@ img_path <- "img"
 
 ## Statistical models
 
--   We motivate the models, building on the statistical inference concepts we learned.
+-   We motivate the models building on the statistical inference concepts we learned.
 
 -   We start with relatively simple models, realizing that the actual data science exercise of forecasting elections involves rather complex ones, which we introduce towards later.
 
@@ -99,7 +105,6 @@ set.seed(2)
 -   We mimic sample sizes from actual polls and construct and report 95% confidence intervals for each of the 12 polls.
 
 ## Poll aggregators
-
 
 ```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
@@ -458,7 +463,7 @@ qplot(spread, data = one_poll_per_pollster, binwidth = 0.01)
 
 -   A problem is that we don't know $\sigma$.
 
--   But theory tells us that we can estimate the urn model $\sigma$ with the *sample standard deviation* defined as 
+-   But theory tells us that we can estimate the urn model $\sigma$ with the *sample standard deviation* defined as
 
 $$s = \sqrt{ \sum_{i=1}^N (X_i - \bar{X})^2 / (N-1)}$$
 
