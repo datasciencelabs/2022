@@ -353,9 +353,10 @@ B &=\frac{.111^2}{.111^2 + .027^2} = 0.944\\
 \end{aligned} 
 $$
 
--   We do not show the derivation here, but the standard error can be shown to be:
 
 ## Hierarchical models
+
+-   We do not show the derivation here, but the standard error can be shown to be:
 
 $$
 \mbox{SE}(p\mid y)^2 = \frac{1}{1/\sigma^2+1/\tau^2} 
