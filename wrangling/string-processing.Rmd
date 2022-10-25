@@ -778,7 +778,7 @@ str_detect(s, "[4-7]")
 
 ## Anchors
 
-- This pattern now only detects the strings with exactly one digit:
+- This pattern only detects the strings with exactly one digit:
 
 ```{r, eval=FALSE} 
 pattern <- "^\\d$" 
@@ -860,6 +860,7 @@ pattern <- "^[4-7]'\\d{1,2}\"$"
 - Let's test it out:
 
 ```{r} 
+pattern <- "^[4-7]'\\d{1,2}\"$" 
 yes <- c("5'7\"", "6'2\"",  "5'12\"") 
 no <- c("6,2\"", "6.2\"","I am 5'11\"", "3'2\"", "64") 
 str_detect(yes, pattern) 
@@ -1066,17 +1067,25 @@ str_detect(s, pattern_without_groups)
 str_detect(s, pattern_with_groups) 
 ``` 
 
+## Groups
+
 - Once we define groups, we can use the function `str_match` to extract the values these groups define:
 
 ```{r} 
 str_match(s, pattern_with_groups) 
 ``` 
 
+- Notice that the second and third columns contain feet and inches, respectively. The first column is the part of the string matching the pattern.
+
+
 ## Groups
 
-- Notice that the second and third columns contain feet and inches, respectively.
+- Once we define groups, we can use the function `str_match` to extract the values these groups define:
 
-- The first column is the part of the string matching the pattern.
+```{r} 
+str_match(s, pattern_with_groups) 
+``` 
+
 
 - If no match occurred, we see an `NA`.
 
@@ -1267,7 +1276,6 @@ pattern_with_groups <-"^([4-7])\\s*[,\\.\\s+]\\s*(\\d*)$"
 str_subset(problems, pattern_with_groups) |> head() 
 ``` 
 
-## Search and replace using groups
 
 - and will be able to perform the search and replace:
 
@@ -1277,8 +1285,6 @@ str_subset(problems, pattern_with_groups) |>
 ``` 
 
 
-
-## Search and replace using groups
 
 - Again, we will deal with the inches-larger-than-twelve challenge later.
 
@@ -1294,11 +1300,9 @@ str_subset(problems, pattern_with_groups) |>
 
 - Here we will test our approach, search for further problems, and tweak our approach for possible improvements.
 
-- Let's write a function that captures all the entries that can't be converted into numbers remembering that some are in centimeters (we will deal with those later):
-
-
-
 ## Testing and improving
+
+- Let's write a function that captures all the entries that can't be converted into numbers remembering that some are in centimeters (we will deal with those later):
 
 ```{r} 
 not_inches_or_cm <- function(x, smallest = 50, tallest = 84){ 
@@ -1334,6 +1338,8 @@ mean(index)
 - Note how we leveraged the pipe, one of the advantages of using __stringr__.
 
 - This last piece of code shows that we have matched well over half of the strings.
+
+## Testing and improving
 
 - Let's examine the remaining cases:
 
@@ -1543,7 +1549,7 @@ str_to_lower(s)
 
 
 
-## Case study 2: self-reported heights (continued)
+## Case study 2: self-reported heights
 
 - We now put all of what we have learned together into a function that takes a string vector and tries to convert as many strings as possible to one format.
 
@@ -1561,11 +1567,10 @@ convert_format <- function(s){
 } 
 ``` 
 
+
+## Case study 2: self-reported heights
+
 - We can also write a function that converts words to numbers:
-
-
-
-## Case study 2: self-reported heights (continued)
 
 ```{r, warning=FALSE, message=FALSE} 
 library(english) 
@@ -1577,13 +1582,12 @@ words_to_numbers <- function(s){
 } 
 ``` 
 
-- Note that we can perform the above operation more efficiently with the function `recode`, which we learn about in Section \@ref(recode).
+- Note that we can perform the above operation more efficiently with the function `recode`, which we learn about later.
+
+
+## Case study 2: self-reported heights
 
 - Now we can see which problematic entries remain:
-
-
-
-## Case study 2: self-reported heights (continued)
 
 ```{r} 
 converted <- problems |> words_to_numbers() |> convert_format() 
@@ -1607,6 +1611,8 @@ remaining_problems[!index]
 
 - We want to extract and save the feet and number values so that we can convert them to inches when appropriate.
 
+## The `extract` function
+
 - If we have a simpler case like this:
 
 ```{r} 
@@ -1618,13 +1624,15 @@ tab <- data.frame(x = s)
 
 ## The `extract` function
 
-- In Section \@ref(separate) we learned about the `separate` function, which can be used to achieve our current goal:
+- We learned about the `separate` function, which can be used to achieve our current goal:
 
 ```{r} 
 tab |> separate(x, c("feet", "inches"), sep = "'") 
 ``` 
 
 - The `extract` function from the __tidyr__ package lets us use regex groups to extract the desired values.
+
+## The `extract` function
 
 - Here is the equivalent to the code above using `separate` but using `extract`:
 
@@ -1654,6 +1662,8 @@ tab <- data.frame(x = s)
 tab |> separate(x, c("feet","inches"), sep = "'", fill = "right") 
 ``` 
 
+## The `extract` function
+
 - However, we can use `extract`.
 
 - The regex here is a bit more complicated since we have to permit `'` with spaces and `feet`.
@@ -1676,7 +1686,7 @@ tab |> extract(x, c("feet", "inches"), regex = "(\\d)'(\\d{1,2})")
 
 - We added an original heights column so we can compare before and after.
 
-- Now we are ready to wrangle our reported heights dataset:
+- Now we are ready to wrangle our reported heights dataset.
 
 
 
@@ -1718,6 +1728,8 @@ new_heights |>
   View() 
 ``` 
 
+## Putting it all together
+
 - A final observation is that if we look at the shortest students in our course:
 
 ```{r} 
@@ -1748,6 +1760,8 @@ new_heights |> arrange(height) |> head(n=7)
 
 - Suppose we did not have the function `read_csv` or `read.csv` available to us.
 
+## String splitting
+
 - We instead have to read a csv file using the base R function `readLines` like this:
 
 ```{r} 
@@ -1771,6 +1785,8 @@ lines |> head()
 
 - We want to extract the values that are separated by a comma for each string in the vector.
 
+## String splitting
+
 - The command `str_split` does exactly this:
 
 ```{r} 
@@ -1786,7 +1802,6 @@ x <- x[-1]
 ``` 
 
 
-
 ## String splitting
 
 - To convert our list into a data frame, we can use a shortcut provided by the `map` functions in the __purrr__ package.
@@ -1800,13 +1815,14 @@ library(purrr)
 map(x, function(y) y[1]) |> head(2) 
 ``` 
 
+## String splitting
+
 - However, because this is such a common task, __purrr__ provides a shortcut.
 
 - If the second argument receives an integer instead of a function, it assumes we want that entry.
 
 
 
-## String splitting
 
 - So the code above can be written more efficiently like this:
 
@@ -1814,15 +1830,15 @@ map(x, function(y) y[1]) |> head(2)
 map(x, 1) 
 ``` 
 
+## String splitting
+
 - To force `map` to return a character vector instead of a list, we can use `map_chr`.
 
 - Similarly, `map_int` returns integers.
 
-- So to create our data frame, we can use:
-
-
-
 ## String splitting
+
+- So to create our data frame, we can use:
 
 ```{r} 
 dat <- tibble(map_chr(x, 1),   
@@ -1834,6 +1850,8 @@ dat <- tibble(map_chr(x, 1),
   setNames(col_names) 
 dat |> head() 
 ``` 
+
+## String splitting
 
 - If you learn more about the __purrr__ package, you will learn that you perform the above with the following, more efficient, code:
 
@@ -1851,6 +1869,9 @@ dat <- x |>
 
 - It turns out that we can avoid all the work shown above after the call to `str_split`.
 
+## String splitting
+
+
 - Specifically, if we know that the data we are extracting can be represented as a table, we can use the argument `simplify=TRUE` and `str_split` returns a matrix instead of a list:
 
 ```{r} 
@@ -1865,7 +1886,7 @@ x |> as_tibble() |>
 
 
 
-## Case study 3: extracting tables from a PDF
+## Case study: extracting tables from PDF
 
 - One of the datasets provided in __dslabs__ shows scientific funding rates by gender in the Netherlands:
 
@@ -1876,31 +1897,35 @@ research_funding_rates |>
   select("discipline", "success_rates_men", "success_rates_women") 
 ``` 
 
-- The data comes from a paper published in the Proceedings of the National Academy of Science (PNAS)^[http://www.pnas.org/content/112/40/12349.abstract], a widely read scientific journal.
+## Case study: extracting tables from PDF
+
+- The data comes from a paper published in the Proceedings of the National Academy of Science ([PNAS](http://www.pnas.org/content/112/40/12349.abstract)), a widely read scientific journal.
 
 - However, the data is not provided in a spreadsheet; it is in a table in a PDF document.
 
+
+
+
+## Case study: extracting tables from PDF
+
 - Here is a screenshot of the table:
-
-
-
-## Case study 3: extracting tables from a PDF
 
 ```{r, echo=FALSE, out.width="60%"} 
 knitr::include_graphics(file.path(img_path, "pnas-table-s1.png")) 
 ``` 
 
-- (Source: Romy van der Lee and Naomi Ellemers, PNAS 2015 112 (40) 12349-12353^[http://www.pnas.org/content/112/40/12349].).
+## Case study: extracting tables from PDF
 
 - We could extract the numbers by hand, but this could lead to human error.
 
 - Instead, we can try to wrangle the data using R.
 
+
+
+
+## Case study: extracting tables from PDF
+
 - We start by downloading the pdf document, then importing into R:
-
-
-
-## Case study 3: extracting tables from a PDF
 
 ```{r, eval=FALSE} 
 library("pdftools") 
@@ -1913,6 +1938,8 @@ file.remove(temp_file)
 ``` 
 
 - If we examine the object text, we notice that it is a character vector with an entry for each page.
+
+## Case study: extracting tables from PDF
 
 - So we keep the page we want:
 
@@ -1928,7 +1955,7 @@ data("raw_data_research_funding_rates")
 
 
 
-## Case study 3: extracting tables from a PDF
+## Case study: extracting tables from PDF
 
 - Examining the object `raw_data_research_funding_rates`.
 
@@ -1940,6 +1967,8 @@ data("raw_data_research_funding_rates")
 tab <- str_split(raw_data_research_funding_rates, "\n") 
 ``` 
 
+## Case study: extracting tables from PDF
+
 - Because we start off with just one element in the string, we end up with a list with just one entry.
 
 ```{r} 
@@ -1950,7 +1979,7 @@ tab <- tab[[1]]
 
 
 
-## Case study 3: extracting tables from a PDF
+## Case study: extracting tables from PDF
 
 ```{r} 
 the_names_1 <- tab[3] 
@@ -1964,6 +1993,8 @@ cat(substr(the_names_1, 1, options()$width))
 cat(substr(the_names_1, options()$width, nchar(the_names_1))) 
 ``` 
 
+## Case study: extracting tables from PDF
+
 - We want to create one vector with one name for each column.
 
 - Using some of the functions we have just learned, we do this.
@@ -1976,11 +2007,13 @@ cat(substr(the_names_1, options()$width, nchar(the_names_1)))
 
 
 
-## Case study 3: extracting tables from a PDF
+## Case study: extracting tables from PDF
 
 - Then we can obtain the elements by splitting strings separated by space.
 
 - We want to split only when there are 2 or more spaces to avoid splitting `Success rates`.
+
+## Case study: extracting tables from PDF
 
 - So we use the regex `\\s{2,}`.
 
@@ -1992,6 +2025,8 @@ the_names_1 <- the_names_1 |>
 the_names_1  
 ``` 
 
+## Case study: extracting tables from PDF
+
 - Now we will look at `the_names_2`:
 
 ```{r, echo=FALSE} 
@@ -2001,7 +2036,7 @@ cat(substr(the_names_2, options()$width, nchar(the_names_2)))
 
 
 
-## Case study 3: extracting tables from a PDF
+## Case study: extracting tables from PDF
 
 - Here we want to trim the leading space and then split by space as we did for the first line:
 
@@ -2011,6 +2046,8 @@ the_names_2 <- the_names_2 |>
   str_split("\\s+", simplify = TRUE) 
 the_names_2 
 ``` 
+
+## Case study: extracting tables from PDF
 
 - We can then join these to generate one name for each column:
 
@@ -2022,13 +2059,14 @@ the_names <- c(the_names_2[1], tmp_names) |>
 the_names 
 ``` 
 
+## Case study: extracting tables from PDF
+
 - Now we are ready to get the actual data.
 
 
-
-## Case study 3: extracting tables from a PDF
-
 - By examining the `tab` object, we notice that the information is in lines 6 through 14.
+
+## Case study: extracting tables from PDF
 
 - We can use `str_split` again to achieve our goal:
 
@@ -2041,6 +2079,10 @@ new_research_funding_rates <- tab[6:14] |>
   mutate_at(-1, parse_number) 
 new_research_funding_rates |> as_tibble() 
 ``` 
+
+
+## Case study: extracting tables from PDF
+
 
 - We can see that the objects are identical:
 
@@ -2066,7 +2108,7 @@ identical(research_funding_rates, new_research_funding_rates)
 
 ## Recoding
 
-```{r} 
+```{r, echo=FALSE} 
 library(dslabs) 
 data("gapminder") 
 ``` 
@@ -2102,7 +2144,7 @@ gapminder |>
   distinct(country)  
 ``` 
 
-- -->.
+## Recoding
 
 - We have four countries with names longer than 12 characters.
 
