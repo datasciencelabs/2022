@@ -1,0 +1,26 @@
+## Exercises 
+1\. For each of the following, determine if the outcome is continuous or categorical: 
+a. Digit reader 
+b. Movie recommendations 
+c. Spam filter 
+d. Hospitalizations 
+e. Siri (speech recognition) 
+2\. How many features are available to us for prediction in the digits dataset? 
+3\. In the digit reader example, the outcomes are stored here: 
+```{r, eval=FALSE} 
+library(dslabs) 
+mnist <- read_mnist() 
+y <- mnist$train$labels 
+``` 
+Do the following operations have a practical meaning? 
+```{r, eval=FALSE} 
+y[5] + y[6] 
+y[5] > y[6] 
+``` 
+Pick the best answer: 
+a. Yes, because $9 + 2 = 11$ and $9 > 2$. 
+b. No, because `y` is not a numeric vector. 
+c. No, because 11 is not a digit. It's two digits. 
+d. No, because these are labels representing a category not a number. A `9` represents a class not the number 9. 
+
+ 

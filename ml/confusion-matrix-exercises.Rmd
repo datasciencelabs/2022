@@ -1,0 +1,22 @@
+## Exercises 
+The `reported_height` and `height` datasets were collected from three classes taught in the Departments of Computer Science and Biostatistics, as well as remotely through the Extension School. The biostatistics class was taught in 2016 along with an online version offered by the Extension School. On 2016-01-25 at 8:15 AM, during one of the lectures, the instructors asked students to fill in the sex and height questionnaire that populated the `reported_height` dataset. The online students filled the survey during the next few days, after the lecture was posted online. We can use this insight to define a variable, call it `type`, to denote the type of student:  `inclass` or `online`: 
+```{r, eval=FALSE} 
+library(lubridate) 
+data("reported_heights") 
+dat <- mutate(reported_heights, date_time = ymd_hms(time_stamp)) |> 
+  filter(date_time >= make_date(2016, 01, 25) &  
+           date_time < make_date(2016, 02, 1)) |> 
+  mutate(type = ifelse(day(date_time) == 25 & hour(date_time) == 8 &  
+                         between(minute(date_time), 15, 30), 
+                       "inclass", "online")) |> select(sex, type) 
+x <- dat$type 
+y <- factor(dat$sex, c("Female", "Male")) 
+``` 
+1\. Show summary statistics that indicate that the `type` is predictive of sex. 
+2\. Instead of using height to predict sex, use the `type` variable. 
+3\. Show the confusion matrix. 
+4\. Use the `confusionMatrix` function in the __caret__ package to report accuracy. 
+5\. Now use the `sensitivity` and `specificity` functions to report specificity and sensitivity. 
+6\. What is the prevalence (% of females) in the `dat` dataset defined above? 
+
+ 
