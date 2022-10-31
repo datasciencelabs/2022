@@ -51,18 +51,18 @@ img_path <- "img"
 
 - Soon enough, we will be attacking more interesting challenges.
 
-- We use the __caret__ package, which has several useful functions for building and assessing machine learning methods and we introduce in more detail in Section \@ref(caret).
+- We use the __caret__ package, which has several useful functions for building and assessing machine learning methods.
 
 ```{r, message=FALSE, warning=FALSE} 
 library(tidyverse) 
 library(caret) 
 ``` 
 
+## Evaluation metrics
+
+
 - For a first example, we use the height data in dslabs:
 
-
-
-## Evaluation metrics
 
 ```{r} 
 library(dslabs) 
@@ -78,11 +78,13 @@ x <- heights$height
 
 - In this case, we have only one predictor, height, and `y` is clearly a categorical outcome since observed values are either `Male` or `Female`.
 
+
+## Evaluation metrics
+
 - We know that we will not be able to predict $Y$ very accurately based on $X$ because male and female average heights are not that different relative to within group variability.
 
 
 
-## Evaluation metrics
 
 - But can we do better than guessing? To answer this question, we need a quantitative definition of better.
 
@@ -106,11 +108,19 @@ x <- heights$height
 
 - We refer to the group for which we pretend we don't know the outcome as the _test_ set.
 
+## Training and test sets
+
 - A standard way of generating the training and test sets is by randomly splitting the data.
 
 - The __caret__ package includes the function `createDataPartition` that helps us generates indexes for randomly splitting the data into training and test sets:
 
 
+
+
+```{r} 
+set.seed(2007) 
+test_index <- createDataPartition(y, times = 1, p = 0.5, list = FALSE) 
+``` 
 
 ## Training and test sets
 
@@ -120,6 +130,9 @@ test_index <- createDataPartition(y, times = 1, p = 0.5, list = FALSE)
 ``` 
 
 - The argument `times` is used to define how many random samples of indexes to return, the argument `p` is used to define what proportion of the data is represented by the index, and the argument `list` is used to decide if we want the indexes returned as a list or not.
+
+
+## Training and test sets
 
 - We can use the result of the `createDataPartition` function call to define the training and test sets like this:
 
@@ -135,6 +148,8 @@ train_set <- heights[-test_index, ]
 - We will now develop an algorithm using **only** the training set.
 
 - Once we are done developing the algorithm, we will _freeze_ it and evaluate it using the test set.
+
+## Training and test sets
 
 - The simplest way to evaluate the algorithm when the outcomes are categorical is by simply reporting the proportion of cases that were correctly predicted **in the test set**.
 
@@ -167,6 +182,8 @@ y_hat <- sample(c("Male", "Female"), length(test_index), replace = TRUE) |>
   factor(levels = levels(test_set$sex)) 
 ``` 
 
+## Overall accuracy
+
 - The _overall accuracy_ is simply defined as the overall proportion that is predicted correctly:
 
 ```{r} 
@@ -179,7 +196,9 @@ mean(y_hat == test_set$sex)
 
 - Not surprisingly, our accuracy is about 50%.
 
-- We are guessing!.
+- We are guessing!
+
+## Overall accuracy
 
 - Can we do better? Exploratory data analysis suggests we can because, on average, males are slightly taller than females:
 
@@ -206,7 +225,11 @@ y_hat <- ifelse(x > 62, "Male", "Female") |>
 mean(y == y_hat) 
 ``` 
 
-- But can we do even better? In the example above, we used a cutoff of 62, but we can examine the accuracy obtained for other cutoffs and then pick the value that provides the best results.
+- But can we do even better? 
+
+## Overall accuracy
+
+In the example above, we used a cutoff of 62, but we can examine the accuracy obtained for other cutoffs and then pick the value that provides the best results.
 
 - But remember, **it is important that we optimize the cutoff using only the training set**: the test set is only for evaluation.
 
@@ -215,6 +238,8 @@ mean(y == y_hat)
 ## Overall accuracy
 
 - Although for this simplistic example it is not much of a problem, later we will learn that evaluating an algorithm on the training set can lead to _overfitting_, which often results in dangerously over-optimistic assessments.
+
+## Overall accuracy
 
 - Here we examine the accuracy of 10 different cutoffs and pick the one yielding the best result:
 
@@ -251,6 +276,8 @@ max(accuracy)
 ``` 
 
 - which is much higher than 0.5.
+
+## Overall accuracy
 
 - The cutoff resulting in this accuracy is:
 
@@ -302,11 +329,10 @@ table(predicted = y_hat, actual = test_set$sex)
 
 - If we study this table closely, it reveals a problem.
 
+## The confusion matrix
+
 - If we compute the accuracy separately for each sex, we get:
 
-
-
-## The confusion matrix
 
 ```{r} 
 test_set |>  
@@ -317,9 +343,12 @@ test_set |>
 
 - There is an imbalance in the accuracy for males and females: too many females are predicted to be male.
 
-- We are calling almost half of the females male! How can our overall accuracy be so high then?  This is because the _prevalence_ of males in this dataset is high.
 
+## The confusion matrix
 
+- We are calling almost half of the females male! How can our overall accuracy be so high then?  
+
+- This is because the _prevalence_ of males in this dataset is high.
 
 
 ## The confusion matrix
@@ -332,6 +361,9 @@ prev
 ``` 
 
 - So when computing overall accuracy, the high percentage of mistakes made for females is outweighed by the gains in correct calls for men.
+
+
+## The confusion matrix
 
 - **This can actually be a big problem in machine learning.** If your training data is biased in some way, you are likely to develop algorithms that are biased as well.
 
@@ -380,15 +412,15 @@ prev
 
   * High specificity: $Y=0 \implies \hat{Y} = 0$.
 
+
 - Although the above is often considered the definition of specificity, another way to think of specificity is by the proportion of positive calls that are actually positive:
 
   * High specificity:  $\hat{Y}=1 \implies Y=1$.
 
-- To provide precise definitions, we name the four entries of the confusion matrix:
-
-
 
 ## Sensitivity and specificity
+
+- To provide precise definitions, we name the four entries of the confusion matrix:
 
 ```{r, echo=FALSE} 
 mat <- matrix(c("True positives (TP)", "False negatives (FN)",  
@@ -396,29 +428,31 @@ mat <- matrix(c("True positives (TP)", "False negatives (FN)",
 colnames(mat) <- c("Actually Positive", "Actually Negative") 
 rownames(mat) <- c("Predicted positive", "Predicted negative") 
 tmp <- as.data.frame(mat) 
+knitr::kable(tmp)
 ``` 
+
+
+## Sensitivity and specificity
 
 - Sensitivity is typically quantified by $TP/(TP+FN)$, the proportion of actual positives (the first column = $TP+FN$) that are called positives ($TP$).
 
 - This quantity is referred to as the _true positive rate_ (TPR) or _recall_.
 
 
-
-## Sensitivity and specificity
-
 - Specificity is defined as $TN/(TN+FP)$ or the proportion of negatives (the second column = $FP+TN$) that are called negatives ($TN$).
 
 - This quantity is also called the true negative rate (TNR).
+
+## Sensitivity and specificity
 
 - There is another way of quantifying specificity which is $TP/(TP+FP)$ or the proportion of outcomes called positives (the first row or $TP+FP$) that are actually positives ($TP$).
 
 - This quantity is referred to as _positive predictive value (PPV)_  and also as _precision_.
 
 
+- Note that, unlike TPR and TNR, precision depends on prevalence since higher prevalence implies you can get higher precision even when guessing.
 
 ## Sensitivity and specificity
-
-- Note that, unlike TPR and TNR, precision depends on prevalence since higher prevalence implies you can get higher precision even when guessing.
 
 - The multiple names can be confusing, so we include a table to help us remember the terms.
 
@@ -483,11 +517,13 @@ cm$byClass[c("Sensitivity","Specificity", "Prevalence")]
 
 - Because specificity and sensitivity are rates, it is more appropriate to compute the _harmonic_ average.
 
+
+## Balanced accuracy and $F_1$ score
+
 - In fact, the _$F_1$-score_, a widely used one-number summary, is the harmonic average of precision and recall:
 
 
 
-## Balanced accuracy and $F_1$ score
 
 $$ \frac{1}{\frac{1}{2}\left(\frac{1}{\mbox{recall}} + \frac{1}{\mbox{precision}}\right) }$$.
 
@@ -495,7 +531,6 @@ $$ \frac{1}{\frac{1}{2}\left(\frac{1}{\mbox{recall}} + \frac{1}{\mbox{precision}
 
 $$2 \times \frac{\mbox{precision} \cdot \mbox{recall}}{\mbox{precision} + \mbox{recall}}$$.
 
-- when defining $F_1$.
 
 
 ## Balanced accuracy and $F_1$ score
@@ -514,8 +549,9 @@ $$2 \times \frac{\mbox{precision} \cdot \mbox{recall}}{\mbox{precision} + \mbox{
 
 - To do this, we define $\beta$ to represent how much more important sensitivity is compared to specificity and consider a weighted harmonic average:
 
-$$\frac{1}{\frac{\beta^2}{1+\beta^2}\frac{1}{\mbox{recall}} + Balanced accuracy and $F_1$ score
- \frac{1}{1+\beta^2}\frac{1}{\mbox{precision}} }$$.
+$$\frac{1}{\frac{\beta^2}{1+\beta^2}\frac{1}{\mbox{recall}} +  \frac{1}{1+\beta^2}\frac{1}{\mbox{precision}} }$$.
+
+## Balanced accuracy and $F_1$ score
 
 - The `F_meas` function in the __caret__ package computes this summary with `beta` defaulting to 1.
 
@@ -565,11 +601,12 @@ best_cutoff
 
 - A cutoff of `r best_cutoff` makes more sense than 64.
 
-- Furthermore, it balances the specificity and sensitivity of our confusion matrix:
 
 
 
 ## Balanced accuracy and $F_1$ score
+
+- Furthermore, it balances the specificity and sensitivity of our confusion matrix:
 
 ```{r} 
 y_hat <- ifelse(test_set$height > best_cutoff, "Male", "Female") |>  
@@ -624,11 +661,12 @@ $$ \mbox{Pr}(Y = 1\mid \hat{Y}=1) = \mbox{Pr}(\hat{Y}=1 \mid Y=1) \frac{\mbox{Pr
 
 - However, while we considered several cutoffs for the second method, for the first we only considered one approach: guessing with equal probability.
 
-- Note that guessing `Male` with higher probability would give us higher accuracy due to the bias in the sample:
-
 
 
 ## ROC and precision-recall curves
+
+
+- Note that guessing `Male` with higher probability would give us higher accuracy due to the bias in the sample:
 
 ```{r} 
 p <- 0.9 
@@ -638,7 +676,9 @@ y_hat <- sample(c("Male", "Female"), n, replace = TRUE, prob=c(p, 1-p)) |>
 mean(y_hat == test_set$sex) 
 ``` 
 
-- But, as described above, this would come at the cost of lower sensitivity.
+## ROC and precision-recall curves
+
+- But, as described previously, this would come at the cost of lower sensitivity.
 
 - The curves we describe in this section will help us see this.
 
@@ -654,7 +694,7 @@ mean(y_hat == test_set$sex)
 
 - If you are wondering where this name comes from, you can consult the.
 
-- ROC Wikipedia page^[https://en.wikipedia.org/wiki/Receiver_operating_characteristic].
+- [ROC Wikipedia page](https://en.wikipedia.org/wiki/Receiver_operating_characteristic).
 
 - The ROC curve plots sensitivity (TPR) versus 1 - specificity or the false positive rate (FPR).
 
@@ -695,9 +735,6 @@ height_cutoff <- map_df(cutoffs, function(x){
 }) 
 ``` 
 
-
-
-## ROC and precision-recall curves
 
 ```{r roc-2, echo=FALSE} 
 bind_rows(guessing, height_cutoff) |> 
@@ -834,15 +871,18 @@ bind_rows(tmp_1, tmp_2) |>
 
 $$ (\hat{y} - y)^2 $$.
 
-- Because we often have a test set with many observations, say $N$, we use the mean squared error (MSE):
 
 
 
 ## The loss function
 
+- Because we often have a test set with many observations, say $N$, we use the mean squared error (MSE):
+
 $$.
  \mbox{MSE} = \frac{1}{N} \mbox{RSS} = \frac{1}{N}\sum_{i=1}^N (\hat{y}_i - y_i)^2
 $$.
+
+## The loss function
 
 - In practice, we often report the root mean squared error (RMSE), which is $\sqrt{\mbox{MSE}}$, because it is in the same units as the outcomes.
 
@@ -874,7 +914,7 @@ $$ \frac{1}{B} \sum_{b=1}^B \frac{1}{N}\sum_{i=1}^N \left(\hat{y}_i^b - y_i^b\ri
 
 ## The loss function
 
-- However, in Chapter \@ref(cross-validation) we describe an approach to estimating the MSE that tries to mimic this theoretical quantity.
+- However, in a next letcutre we will describe cross vaildation,   an approach to estimating the MSE that tries to mimic this theoretical quantity.
 
 - Note that there are loss functions other than the squared loss.
 

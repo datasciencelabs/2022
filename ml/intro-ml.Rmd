@@ -33,15 +33,19 @@ knitr::opts_chunk$set(
 img_path <- "img"
 ```
 
-## (PART) Machine Learning
-
-
 
 ## Introduction to machine learning
 
 - Perhaps the most popular data science methodologies come from the field of _machine learning_.
 
-- Machine learning success stories include the handwritten zip code readers implemented by the postal service, speech recognition technology such as Apple's Siri, movie recommendation systems, spam and malware detectors, housing price predictors, and driverless cars.
+- Machine learning success stories include 
+
+  - the handwritten zip code readers implemented by the postal service, 
+  - speech recognition technology such as Apple's Siri, 
+  - movie recommendation systems, 
+  - spam and malware detectors, 
+  - housing price predictors, and 
+  - driverless cars.
 
 
 
@@ -55,7 +59,7 @@ img_path <- "img"
 
 - In machine learning, data comes in the form of:
 
-  1. the _outcome_ we want to predict and.
+  1. the _outcome_ we want to predict and
 
   2. the _features_ that we will use to predict the outcome.
 
@@ -89,7 +93,7 @@ img_path <- "img"
 
 - Spam detection has two outcomes: spam or not spam.
 
-- In this book, we denote the $K$ categories with indexes $k=1,\dots,K$.
+- In these notes, we denote the $K$ categories with indexes $k=1,\dots,K$.
 
 - However, for binary data we will use $k=0,1$ for mathematical conveniences that we demonstrate later.
 
@@ -140,7 +144,9 @@ knitr::kable(tmp)
 
 ## Notation
 
-- When the output is continuous we refer to the machine learning task as _prediction_, and the main output of the model is a function $f$ that automatically produces a prediction, denoted with $\hat{y}$, for any set of predictors: $\hat{y} = f(x_1, x_2, \dots, x_p)$.
+- When the output is continuous we refer to the machine learning task as _prediction_, and the main output of the model is a function $f$ that automatically produces a prediction, denoted with $\hat{y}$, for any set of predictors: 
+
+$$\hat{y} = f(x_1, x_2, \dots, x_p)$$.
 
 - We use the term _actual outcome_ to denote what we ended up observing.
 
@@ -150,7 +156,11 @@ knitr::kable(tmp)
 
 ## Notation
 
-- Because our outcome is continuous, our predictions $\hat{y}$ will not be either exactly right or wrong, but instead we will determine an _error_ defined as the difference between the prediction and the actual outcome $y - \hat{y}$.
+- If our outcome is continuous, our predictions $\hat{y}$ will not be either exactly right or wrong, but instead we will determine an _error_ defined as the difference between the prediction and the actual outcome 
+
+$$y - \hat{y}$$.
+
+## Notation
 
 - When the outcome is categorical, we refer to the machine learning task as _classification_, and the main output of the model will be a _decision rule_ which prescribes which of the $K$ classes we should predict.
 
@@ -160,19 +170,23 @@ knitr::kable(tmp)
 
 ## Notation
 
-- When the data is binary a typical decision rules looks like this: if $f_1(x_1, x_2, \dots, x_p) > C$, predict category 1, if not the other category, with $C$ a predetermined cutoff.
+- When the data is binary a typical decision rules looks like this: 
+$$\mbox{if } f_1(x_1, x_2, \dots, x_p) > C, \mbox{ predict category } 1$$, 
+
+- if not the other category.
+
+- $C$ is a predetermined cutoff.
 
 - Because the outcomes are categorical, our predictions will be either right or wrong.
+
+## Notation
 
 - Notice that these terms vary among courses, text books, and other publications.
 
 - Often _prediction_ is used for both categorical and continuous outcomes, and the term _regression_ can be used for the continuous case.
 
 
-
-## Notation
-
-- Here we avoid using _regression_ to avoid confusion with our previous use of the term _linear regression_.
+- Here we avoid using _regression_ to avoid confusion with the use of the term _linear regression_.
 
 - In most cases it will be clear if our outcomes are categorical or continuous, so we will avoid using these terms when possible.
 
@@ -196,11 +210,9 @@ knitr::include_graphics(file.path(img_path,"how-to-write-a-address-on-an-envelop
 
 ## An example
 
-- In this part of the part of the class we will learn how to build algorithms that can read a digit.
+- In this part of the class we will learn how to build algorithms that can read a digit.
 
-- The first step in building an algorithm is to understand.
-
-- what are the outcomes and features.
+- The first step in building an algorithm is to understand what are the outcomes and features.
 
 - Below are three images of written digits.
 
@@ -267,7 +279,7 @@ tmp |> ggplot(aes(Row, Column, fill=value)) +
 
 - The machine learning task is to build an algorithm that returns a prediction for any of the possible values of the features.
 
-- Here, we will learn several approaches to building these algorithms.
+- We will learn several approaches to building these algorithms.
 
 
 
