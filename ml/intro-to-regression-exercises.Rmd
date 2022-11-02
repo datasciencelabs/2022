@@ -1,0 +1,6 @@
+## Exercises 
+1\. Load the `GaltonFamilies` data from the __HistData__. The children in each family are listed by gender and then by height. Create a dataset called `galton_heights` by picking a male and female at random.  
+2\. Make a scatterplot for heights between mothers and daughters, mothers and sons, fathers and daughters, and fathers and sons.  
+3\. Compute the correlation in heights between mothers and daughters, mothers and sons, fathers and daughters, and fathers and sons. 
+
+ 
