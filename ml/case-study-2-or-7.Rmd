@@ -221,7 +221,7 @@ mnist_27$true_p |> ggplot(aes(x_1, x_2, z = p, fill = p)) +
 
 ## Case study: is it a 2 or a 7?
 
-- Above you see a plot of the true $p(x_1, x_2)$.
+- We are plotting the true $p(x_1, x_2)$.
 
 - To start understanding the limitations of regression here, first note that with regression $\hat{p}(x_1,x_2)$ has to be a plane, and as a result the boundary defined by the decision rule is given by:
 

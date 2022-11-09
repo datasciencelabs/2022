@@ -1,0 +1,727 @@
+---
+title: "Smoothing"
+author: "Rafael A. Irizarry"
+date: "`r lubridate::today()`"
+output:
+  ioslides_presentation:
+    fig_caption: no
+    fig_height: 5
+    fig_width: 7
+    out_width: "70%"
+  beamer_presentation: default
+  slidy_presentation: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(dslabs)
+library(gridExtra)
+library(ggthemes)
+ds_theme_set()
+options(digits = 3)
+knitr::opts_chunk$set(
+  comment = "#>",
+  collapse = TRUE,
+  cache = TRUE,
+  out.width = "70%",
+  fig.align = "center",
+  fig.width = 6,
+  fig.asp = 0.618,  # 1 / phi
+  fig.show = "hold"
+)
+
+img_path <- "img"
+```
+
+## Smoothing
+
+- Before continuing learning about machine learning algorithms, we introduce the important concept of _smoothing_.
+
+- Smoothing is a very powerful technique used all across data analysis.
+
+- Other names given to this technique are _curve fitting_ and _low pass filtering_.
+
+- It is designed to detect trends in the presence of noisy data in cases in which the shape of the trend is unknown.
+
+
+
+## Smoothing
+
+- The _smoothing_ name comes from the fact that to accomplish this feat, we assume that the trend is _smooth_, as in a smooth surface.
+
+## Smoothing
+
+- In contrast, the noise, or deviation from the trend, is unpredictably wobbly:
+
+
+
+
+```{r signal-plus-noise-example, message=FALSE, warning=FALSE, out.height=400, out.height=400, echo=FALSE} 
+library(tidyverse) 
+set.seed(1) 
+n <- 100 
+x <- seq(-pi*4, pi*4, len = n) 
+tmp <- data.frame(x = x , f = sin(x) + x/8, e = rnorm(n, 0, 0.5))  
+p1 <- qplot(x, f, main = "smooth trend", ylim = range(tmp$f+tmp$e), data = tmp, geom = "line") 
+p2 <- qplot(x, e, main = "noise", ylim = range(tmp$f+tmp$e), data = tmp, geom = "line") 
+p3 <- qplot(x, f+e, main = "data = smooth trend + noise", ylim = range(tmp$f+tmp$e), data = tmp, geom = "line") 
+gridExtra::grid.arrange(p1, p2, p3) 
+``` 
+
+
+## Smoothing
+
+- Part of what we explain in this section are the assumptions that permit us to extract the trend from the noise.
+
+- To understand why we cover this topic, remember that the concepts behind smoothing techniques are extremely useful in machine learning because conditional expectations/probabilities can be thought of as _trends_ of unknown shapes that we need to estimate in the presence of uncertainty.
+
+- To explain these concepts, we will focus first on a problem with just one predictor.
+
+
+
+## Smoothing
+
+- Specifically, we try to estimate the time trend in the 2008 US popular vote poll margin (difference between Obama and McCain).
+
+```{r polls-2008-data, warning=FALSE, message=FALSE, eval=FALSE} 
+library(tidyverse) 
+library(dslabs) 
+data("polls_2008") 
+qplot(day, margin, data = polls_2008) 
+``` 
+
+
+## Smoothing
+
+```{r polls-2008-data-run, warning=FALSE, message=FALSE, echo=FALSE} 
+library(tidyverse) 
+library(dslabs) 
+data("polls_2008") 
+qplot(day, margin, data = polls_2008) 
+``` 
+
+
+## Smoothing
+
+- For the purposes of this example, do not think of it as a forecasting problem.
+
+- Instead, we are simply interested in learning the shape of the trend *after* the election is over.
+
+- We assume that for any given day $x$, there is a true preference among the electorate $f(x)$, but due to the uncertainty introduced by the polling, each data point comes with an error $\varepsilon$.
+
+## Smoothing
+
+- A mathematical model for the observed poll margin $Y_i$ is:
+
+$$
+Y_i = f(x_i) + \varepsilon_i
+$$
+
+- To think of this as a machine learning problem, consider that we want to predict $Y$ given a day $x$.
+
+- If we knew the conditional expectation $f(x) = \mbox{E}(Y \mid X=x)$, we would use it.
+
+- But since we don't know this conditional expectation, we have to estimate it.
+
+
+- Let's use regression, since it is the only method we have learned up to now.
+
+
+
+## Smoothing
+
+```{r linear-regression-not-flexible, echo=FALSE} 
+resid <- ifelse(lm(margin~day, data = polls_2008)$resid > 0, "+", "-") 
+polls_2008 |>  
+  mutate(resid = resid) |>  
+  ggplot(aes(day, margin)) +  
+  geom_smooth(method = "lm", formula = "y~x", se = FALSE, color = "black") + 
+  geom_point(aes(color = resid), size = 3) 
+``` 
+
+
+## Smoothing
+
+- The line we see does not appear to describe the trend very well.
+
+- For example, on September 4 (day -62), the Republican Convention was held and the data suggest that it gave John McCain a boost in the polls.
+
+- However, the regression line does not capture this potential trend.
+
+- To see the _lack of fit_ more clearly, we note that points above the fitted line (blue) and those below (red) are not evenly distributed across days.
+
+
+
+- We therefore need an alternative, more flexible approach.
+
+
+
+## Bin smoothing
+
+- The general idea of smoothing is to group data points into strata in which the value of $f(x)$ can be assumed to be constant.
+
+- We can make this assumption because we think $f(x)$ changes slowly and, as a result, $f(x)$ is almost constant in small windows of time.
+
+- An example of this idea for the `poll_2008` data is to assume that public opinion remained approximately the same within a week's time.
+
+- With this assumption in place, we have several data points with the same expected value.
+
+
+
+## Bin smoothing
+
+- If we fix a day to be in the center of our week, call it $x_0$, then for any other day $x$ such that $|x - x_0| \leq 3.5$, we assume $f(x)$ is a constant $f(x) = \mu$.
+
+- This assumption implies that:
+
+$$
+E[Y_i | X_i = x_i ] \approx \mu \mbox{   if   }  |x_i - x_0| \leq 3.5
+$$
+
+
+
+## Bin smoothing
+
+- In smoothing, we call the size of the interval satisfying $|x_i - x_0| \leq 3.5$ the _window size_, _bandwidth_ or _span_.
+
+- Later we will see that we try to optimize this parameter.
+
+- This assumption implies that a good estimate for $f(x)$ is the average of the $Y_i$ values in the window.
+
+- If we define $A_0$ as the set of indexes $i$ such that $|x_i - x_0| \leq 3.5$ and $N_0$ as the number of indexes in $A_0$, then our estimate is:
+
+$$
+\hat{f}(x_0) = \frac{1}{N_0} \sum_{i \in A_0}  Y_i.
+$$.
+
+## Bin smoothing
+
+- The idea behind _bin smoothing_ is to make this calculation with each value of $x$ as the center.
+
+- In the poll example, for each day, we would compute the average of the values within a week with that day in the center.
+
+## Bin smoothing
+
+- Here are two examples: $x_0 = -125$ and $x_0 = -55$.
+
+- The blue segment represents the resulting average.
+
+
+```{r binsmoother-expained, echo=FALSE} 
+span <- 3.5 
+tmp <- polls_2008 |> 
+  crossing(center = polls_2008$day) |> 
+  mutate(dist = abs(day - center)) |> 
+  filter(dist <= span)  
+tmp |> filter(center %in% c(-125, -55)) |> 
+  ggplot(aes(day, margin)) +    
+  geom_point(data = polls_2008, size = 3, alpha = 0.5, color = "grey") + 
+  geom_point(size = 2) +     
+  geom_smooth(aes(group = center),  
+              method = "lm", formula=y~1, se = FALSE) + 
+  facet_wrap(~center) 
+``` 
+
+
+- By computing this mean for every point, we form an estimate of the underlying curve $f(x)$.
+
+
+- Below we show the procedure happening as we move from the -155 up to 0.
+
+
+## Bin smoothing
+
+- At each $x_0$, we keep $\hat{f}(x_0)$ and move on to the next point:
+
+```{r binsmoother-animation, echo=FALSE, warning=FALSE, out.width="50%"}  
+library(gganimate) 
+span <- 7 
+fit <- with(polls_2008, ksmooth(day, margin, kernel="box", x.points = day, bandwidth = span)) 
+bin_fit <- data.frame(x = fit$x, .fitted=fit$y) 
+knitr::include_graphics(file.path(img_path, "binsmoother-animation.gif"))
+``` 
+
+
+## Bin smoothing
+
+- The final code and  resulting estimate look like this:
+
+```{r binsmoother-final, eval=FALSE} 
+span <- 7  
+fit <- with(polls_2008,  
+            ksmooth(day, margin, kernel = "box", bandwidth = span)) 
+polls_2008 |> mutate(smooth = fit$y) |> 
+  ggplot(aes(day, margin)) + 
+    geom_point(size = 3, alpha = .5, color = "grey") +  
+  geom_line(aes(day, smooth), color="red") 
+``` 
+
+
+## Bin smoothing
+
+```{r binsmoother-final-run, echo=FALSE} 
+span <- 7  
+fit <- with(polls_2008,  
+            ksmooth(day, margin, kernel = "box", bandwidth = span)) 
+polls_2008 |> mutate(smooth = fit$y) |> 
+  ggplot(aes(day, margin)) + 
+    geom_point(size = 3, alpha = .5, color = "grey") +  
+  geom_line(aes(day, smooth), color="red") 
+``` 
+
+
+
+## Kernels
+
+- The final result from the bin smoother is quite wiggly.
+
+- One reason for this is that each time the window moves, two points change.
+
+- We can attenuate this somewhat by taking weighted averages that give the center point more weight than far away points, with the two points at the edges receiving very little weight.
+
+## Kernels
+
+- You can think of the bin smoother approach as a weighted average:
+
+$$
+\hat{f}(x_0) = \sum_{i=1}^N w_0(x_i) Y_i
+$$
+
+- in which each point receives a weight of either $0$ or $1/N_0$, with $N_0$ the number of points in the week.
+
+- In the code above, we used the argument `kernel="box"` in our call to the function `ksmooth`.
+
+- This is because the weight function looks like a box.
+
+- The `ksmooth` function provides a "smoother" option which uses the normal density to assign weights.
+
+
+## Kernels
+
+```{r gaussian-kernel, echo=FALSE, out.width="80%", fig.height=3, fig.width=6} 
+x_0 <- -125 
+p1 <- data.frame(x = polls_2008$day) |> mutate(w_0 = 1*I(abs(x - x_0)<=span/2)) |> 
+  mutate(w_0 = w_0/sum(w_0)) |> 
+  ggplot(aes(x, w_0)) + 
+  geom_step() + 
+  ggtitle("Box") 
+tmp <- with(data.frame(day = seq(min(polls_2008$day), max(polls_2008$day), .25)),  
+                       ksmooth(day, 1*I(day == x_0), kernel = "normal", x.points = day, bandwidth = span)) 
+p2 <- data.frame(x = tmp$x, w_0 = tmp$y) |> 
+  mutate(w_0 = w_0/sum(w_0)) |> 
+  ggplot(aes(x, w_0)) + 
+  geom_line() + 
+  ggtitle("Normal") 
+gridExtra::grid.arrange(p1, p2, ncol = 2) 
+``` 
+
+
+## Kernels
+
+- With this animation, we see that points on the edge get less weight (the size of the point is proportional to its weight):
+
+
+```{r kernel-animation, echo=FALSE, warning=FALSE, out.width="50%"}  
+tmp <- polls_2008 |> 
+  crossing(center = polls_2008$day) |> 
+  mutate(dist = abs(day - center)) |> 
+  filter(dist <= span) |>  
+  mutate(weight =  dnorm(dist, 0, span/2.54))|> 
+  mutate(weight = weight/max(weight)) 
+span <- 7 
+fit <- with(polls_2008, ksmooth(day, margin, kernel="normal", x.points = day, bandwidth = span)) 
+bin_fit <- data.frame(x = fit$x, .fitted=fit$y) 
+knitr::include_graphics(file.path(img_path, "kernel-animation.gif"))
+``` 
+
+
+## Kernels
+
+- The final code and resulting plot for the normal kernel look like this:
+
+```{r final-ksmooth-normal-kernel, eval=FALSE} 
+span <- 7 
+fit <- with(polls_2008,  
+            ksmooth(day, margin, kernel = "normal", bandwidth = span)) 
+polls_2008 |> mutate(smooth = fit$y) |> 
+  ggplot(aes(day, margin)) + 
+  geom_point(size = 3, alpha = .5, color = "grey") +  
+  geom_line(aes(day, smooth), color="red") 
+``` 
+
+
+## Kernels
+
+```{r final-ksmooth-normal-kernel-run, echo=FALSE} 
+span <- 7 
+fit <- with(polls_2008,  
+            ksmooth(day, margin, kernel = "normal", bandwidth = span)) 
+polls_2008 |> mutate(smooth = fit$y) |> 
+  ggplot(aes(day, margin)) + 
+  geom_point(size = 3, alpha = .5, color = "grey") +  
+  geom_line(aes(day, smooth), color="red") 
+``` 
+
+
+## Kernels
+
+- Notice that the final estimate now looks smoother.
+
+- There are several functions in R that implement bin smoothers.
+
+- One example is `ksmooth`, shown above.
+
+- In practice, however, we typically prefer methods that use slightly more complex models than fitting a constant.
+
+- The final result above, for example, is still somewhat wiggly in parts we don't expect it to be (between -125 and -75, for example).
+
+- Methods such as `loess`, which we explain next, improve on this.
+
+
+## Local weighted regression (loess)
+
+- A limitation of the bin smoother approach just described is that we need small windows for the approximately constant assumptions to hold.
+
+- As a result, we end up with a small number of data points to average and obtain imprecise estimates $\hat{f}(x)$.
+
+- Here we describe how _local weighted regression_ (loess) permits us to consider larger window sizes.
+
+- To do this, we will use a mathematical result, referred to as Taylor's theorem, which tells us that if you look closely enough at any smooth function $f(x)$, it will look like a line.
+
+
+
+## Local weighted regression (loess)
+
+- To see why this makes sense, consider the curved edges gardeners make using straight-edged spades:
+
+
+```{r, echo=FALSE} 
+knitr::include_graphics(file.path(img_path, "garden.png")) 
+``` 
+
+
+## Local weighted regression (loess)
+
+- Instead of assuming the function is approximately constant in a window, we assume the function is locally linear.
+
+- We can consider larger window sizes with the linear assumption than with a constant.
+
+
+
+## Local weighted regression (loess)
+
+- Instead of the one-week window, we consider a larger one in which the trend is approximately linear.
+
+- We start with a three-week window and later consider and evaluate other options:
+
+$$
+E[Y_i | X_i = x_i ] = \beta_0 + \beta_1 (x_i-x_0) \mbox{   if   }  |x_i - x_0| \leq 21
+$$
+
+
+- For every point $x_0$, loess defines a window and fits a line within that window.
+
+## Local weighted regression (loess)
+
+- Here is an example showing the fits for $x_0=-125$ and $x_0 = -55$:
+
+
+```{r loess, echo=FALSE} 
+span <- 21/diff(range(polls_2008$day)) 
+tmp <- polls_2008 |> 
+  crossing(center = polls_2008$day) |> 
+  mutate(dist = abs(day - center)) |> 
+  filter(rank(dist) / n() <= span) |> 
+  mutate(weight = (1 - (dist / max(dist)) ^ 3) ^ 3) 
+tmp |>  
+  filter(center %in% c(-125, -55)) |> 
+  ggplot(aes(day, margin)) +    
+  scale_size(range = c(0, 3)) + 
+  geom_smooth(aes(group = center, weight = weight),  
+              method = "lm", formula="y~x", se = FALSE) + 
+  geom_point(data = polls_2008, size = 3, alpha = .5, color = "grey") + 
+  geom_point(aes(size = weight)) + 
+  facet_wrap(~center) 
+``` 
+
+
+## Local weighted regression (loess)
+
+- The fitted value at $x_0$ becomes our estimate $\hat{f}(x_0)$.
+
+```{r loess-animation, echo=FALSE, warning=FALSE, out.width="40%"}  
+library(broom) 
+fit <- loess(margin ~ day, degree=1, span = span, data=polls_2008) 
+loess_fit <- augment(fit) 
+knitr::include_graphics(file.path(img_path,"loess-animation.gif"))
+``` 
+
+
+## Local weighted regression (loess)
+
+- The final result is a smoother fit than the bin smoother since we use larger sample sizes to estimate our local parameters:
+
+```{r final-loess, eval=FALSE} 
+total_days <- diff(range(polls_2008$day)) 
+span <- 21/total_days 
+fit <- loess(margin ~ day, degree=1, span = span, data=polls_2008) 
+polls_2008 |> mutate(smooth = fit$fitted) |> 
+  ggplot(aes(day, margin)) + 
+  geom_point(size = 3, alpha = .5, color = "grey") + 
+  geom_line(aes(day, smooth), color="red") 
+``` 
+
+
+## Local weighted regression (loess)
+
+```{r final-loess-run, echo=FALSE} 
+total_days <- diff(range(polls_2008$day)) 
+span <- 21/total_days 
+fit <- loess(margin ~ day, degree=1, span = span, data=polls_2008) 
+polls_2008 |> mutate(smooth = fit$fitted) |> 
+  ggplot(aes(day, margin)) + 
+  geom_point(size = 3, alpha = .5, color = "grey") + 
+  geom_line(aes(day, smooth), color="red") 
+``` 
+
+
+## Local weighted regression (loess)
+
+- Different spans give us different estimates.
+
+```{r loess-multi-span-animation, echo=FALSE, warning=FALSE, out.width="60%"}  
+spans <- c(.66, 0.25, 0.15, 0.10) 
+fits <- tibble(span = spans) |>  
+  group_by(span) |>  
+  do(broom::augment(loess(margin ~ day, degree=1, span = .$span, data=polls_2008))) 
+tmp <- fits |> 
+  crossing(center = polls_2008$day) |> 
+  mutate(dist = abs(day - center)) |> 
+  filter(rank(dist) / n() <= span) |> 
+  mutate(weight = (1 - (dist / max(dist)) ^ 3) ^ 3) 
+knitr::include_graphics(file.path(img_path, "loess-multi-span-animation.gif"))
+``` 
+
+
+## Local weighted regression (loess)
+
+- Here are the final estimates:
+
+```{r loess-final, echo=FALSE} 
+tmp |> ggplot(aes(day, margin)) + 
+  geom_point(size = 2, alpha = .5, color = "grey") + 
+  geom_line(aes(day, .fitted), data = fits, color = "red") + 
+  facet_wrap(~span) 
+``` 
+
+
+## Local weighted regression (loess)
+
+- There are three other differences between `loess` and the typical bin smoother.
+
+## First
+
+- Rather than keeping the bin size the same, `loess` keeps the number of points used in the local fit the same.
+
+- This number is controlled via the `span` argument, which expects a proportion.
+
+- For example, if `N` is the number of data points and `span=0.5`, then for a given $x$, `loess` will use the `0.5 * N` closest points to $x$ for the fit.
+
+
+
+## Second
+
+- When fitting a line locally, `loess` uses a _weighted_ approach.
+
+- Basically, instead of using least squares, we minimize a weighted version:
+
+$$
+\sum_{i=1}^N w_0(x_i) \left[Y_i - \left\{\beta_0 + \beta_1 (x_i-x_0)\right\}\right]^2
+$$
+
+
+- However, instead of the Gaussian kernel, loess uses a function called the Tukey tri-weight:
+
+$$
+W(u)= \left( 1  - |u|^3\right)^3 \mbox{ if } |u| \leq 1 \mbox{ and } W(u) = 0 \mbox{ if } |u| > 1
+$$
+
+## Second
+
+- To define the weights, we denote $2h$ as the window size and define:
+
+$$
+w_0(x_i) = W\left(\frac{x_i - x_0}{h}\right).
+$$
+
+## Second
+
+- This kernel differs from the Gaussian kernel in that more points get values closer to the max:
+
+```{r triweight-kernel, echo=FALSE, out.width="80%", fig.height=3, fig.width=6} 
+x_0 <- -125 
+tmp <- with(data.frame(day = seq(min(polls_2008$day), max(polls_2008$day), .25)),  
+                       ksmooth(day, 1*I(day == x_0), kernel = "normal", x.points = day, bandwidth = 7)) 
+p1 <- data.frame(x = tmp$x, w_0 = tmp$y) |> 
+  mutate(w_0 = w_0/sum(w_0)) |> 
+  ggplot(aes(x, w_0)) + 
+  geom_line() + 
+  ggtitle("Normal") 
+p2 <- data.frame(x = seq(min(polls_2008$day), max(polls_2008$day), length.out = 100)) |> 
+  mutate(w_0 = (1 - (abs(x-x_0)/21)^3)^3*I(abs(x-x_0)<=21)) |> 
+  ggplot(aes(x, w_0)) + 
+  geom_line()  + 
+  ggtitle("Tri-weight") 
+gridExtra::grid.arrange(p1, p2, ncol = 2) 
+``` 
+
+
+## Third
+
+- `loess` has the option of fitting the local model _robustly_.
+
+- An iterative algorithm is implemented in which, after fitting a model in one iteration, outliers are detected and down-weighted for the next iteration.
+
+- To use this option, we use the argument `family="symmetric"`.
+
+
+
+## Fitting parabolas
+
+- Taylor's theorem also tells us that if you look at any mathematical function closely enough, it looks like a parabola.
+
+- The theorem also states that you don't have to look as closely when approximating with parabolas as you do when approximating with lines.
+
+- This means we can make our windows even larger and fit parabolas instead of lines.
+
+$$
+E[Y_i | X_i = x_i ] = \beta_0 + \beta_1 (x_i-x_0) + \beta_2 (x_i-x_0)^2 \mbox{   if   }  |x_i - x_0| \leq h
+$$
+
+## Fitting parabolas
+
+- This is actually the default procedure of the function `loess`.
+
+- You may have noticed that when we showed the code for using loess, we set `degree = 1`.
+
+- This tells loess to fit polynomials of degree 1, a fancy name for lines.
+
+- If you read the help page for loess, you will see that the argument `degree` defaults to 2.
+
+
+
+## Fitting parabolas
+
+- By default, loess fits parabolas not lines.
+
+- Here is a comparison of the fitting lines (red dashed) and fitting parabolas (orange solid):
+
+```{r polls-2008-parabola-line-loess, eval=FALSE} 
+total_days <- diff(range(polls_2008$day)) 
+span <- 28/total_days 
+fit_1 <- loess(margin ~ day, degree=1, span = span, data=polls_2008) 
+fit_2 <- loess(margin ~ day, span = span, data=polls_2008) 
+polls_2008 |> mutate(smooth_1 = fit_1$fitted, smooth_2 = fit_2$fitted) |> 
+  ggplot(aes(day, margin)) + 
+  geom_point(size = 3, alpha = .5, color = "grey") + 
+  geom_line(aes(day, smooth_1), color="red", lty = 2) + 
+  geom_line(aes(day, smooth_2), color="orange", lty = 1)  
+``` 
+
+
+## Fitting parabolas
+
+```{r polls-2008-parabola-line-loess-run, echo=FALSE} 
+total_days <- diff(range(polls_2008$day)) 
+span <- 28/total_days 
+fit_1 <- loess(margin ~ day, degree=1, span = span, data=polls_2008) 
+fit_2 <- loess(margin ~ day, span = span, data=polls_2008) 
+polls_2008 |> mutate(smooth_1 = fit_1$fitted, smooth_2 = fit_2$fitted) |> 
+  ggplot(aes(day, margin)) + 
+  geom_point(size = 3, alpha = .5, color = "grey") + 
+  geom_line(aes(day, smooth_1), color="red", lty = 2) + 
+  geom_line(aes(day, smooth_2), color="orange", lty = 1)  
+``` 
+
+
+## Fitting parabolas
+
+- The `degree = 2` gives us more wiggly results.
+
+- We actually prefer `degree = 1` as it is less prone to this kind of noise.
+
+
+
+## Beware of default smoothing parameters
+
+- `ggplot` uses loess in its `geom_smooth` function:
+
+```{r ggplot-loess-default, warning=FALSE, message=FALSE, eval=FALSE} 
+polls_2008 |> ggplot(aes(day, margin)) + 
+  geom_point() +  
+  geom_smooth(method = loess) 
+``` 
+
+
+## Beware of default smoothing parameters
+
+```{r ggplot-loess-default-run, warning=FALSE, message=FALSE, echo=FALSE} 
+polls_2008 |> ggplot(aes(day, margin)) + 
+  geom_point() +  
+  geom_smooth(method = loess) 
+``` 
+
+
+## Beware of default smoothing parameters
+
+- But be careful with default parameters as they are rarely optimal.
+
+- However, you can conveniently change them:
+
+```{r ggplot-loess-degree-1, warning=FALSE, message=FALSE, eval=FALSE} 
+polls_2008 |> ggplot(aes(day, margin)) + 
+  geom_point() +  
+  geom_smooth(method = loess, method.args = list(span = 0.15, degree = 1)) 
+``` 
+
+
+## Beware of default smoothing parameters
+
+```{r ggplot-loess-degree-1-run, warning=FALSE, message=FALSE, echo=FALSE} 
+polls_2008 |> ggplot(aes(day, margin)) + 
+  geom_point() +  
+  geom_smooth(method = loess, method.args = list(span = 0.15, degree = 1)) 
+``` 
+
+
+
+
+
+## Connecting smoothing to machine learning
+
+- To see how smoothing relates to machine learning with a concrete example, consider our 2 v 7 example.
+
+- If we define the outcome $Y = 1$ for digits that are seven and $Y=0$ for digits that are 2, then we are interested in estimating the conditional probability:
+
+$$
+p(x_1, x_2) = \mbox{Pr}(Y=1 \mid X_1=x_1 , X_2 = x_2)
+$$
+
+
+- with $X_1$ and $X_2$ the two predictors defined for this example.
+
+## Connecting smoothing to machine learning
+
+- In this example, the 0s and 1s we observe are "noisy" because for some regions the probabilities $p(x_1, x_2)$ are not that close to 0 or 1.
+
+- So we need to estimate $p(x_1, x_2)$.
+
+- Smoothing is an alternative to accomplishing this.
+
+
+## Connecting smoothing to machine learning
+
+- Previously we saw that linear regression was not flexible enough to capture the non-linear nature of $p(x_1, x_2)$, thus smoothing approaches may provide an improvement.
+
+- In next lecture, we describe a popular machine learning algorithm, k-nearest neighbors, which is based on bin smoothing.
+
