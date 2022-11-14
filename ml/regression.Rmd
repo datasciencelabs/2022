@@ -1,0 +1,609 @@
+---
+title: "Regression"
+author: "Rafael A. Irizarry"
+date: "`r lubridate::today()`"
+output:
+  ioslides_presentation:
+    fig_caption: no
+    fig_height: 5
+    fig_width: 7
+    out_width: "70%"
+  beamer_presentation: default
+  slidy_presentation: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(dslabs)
+library(gridExtra)
+library(ggthemes)
+ds_theme_set()
+options(digits = 3)
+knitr::opts_chunk$set(
+  comment = "#>",
+  collapse = TRUE,
+  cache = TRUE,
+  out.width = "70%",
+  fig.align = "center",
+  fig.width = 6,
+  fig.asp = 0.618,  # 1 / phi
+  fig.show = "hold"
+)
+
+img_path <- "img"
+```
+
+## Examples of algorithms
+
+- There are dozens of machine learning algorithms.
+
+- Here we provide a few examples spanning rather different approaches.
+
+- We will be using the two predictor digits data  to demonstrate how the algorithms work.
+
+```{r warning=FALSE, message=FALSE} 
+library(tidyverse) 
+library(dslabs) 
+library(caret) 
+data("mnist_27") 
+``` 
+
+
+
+## Linear regression
+
+- Linear regression can be considered a machine learning algorithm.
+
+- We demonstrated how linear regression can be too rigid to be useful.
+
+- This is generally true, but for some challenges it works rather well.
+
+- It also serves as a baseline approach: if you can't beat it with a more complex approach, you probably want to stick to linear regression.
+
+
+
+## Linear regression
+
+- To quickly make the connection between regression and machine learning, we will reformulate Galton's study with heights, a continuous outcome.
+
+```{r, message=FALSE, warning=FALSE} 
+library(HistData) 
+set.seed(1983) 
+galton_heights <- GaltonFamilies |> 
+  filter(gender == "male") |> 
+  group_by(family) |> 
+  sample_n(1) |> 
+  ungroup() |> 
+  select(father, childHeight) |> 
+  rename(son = childHeight) 
+``` 
+
+
+
+## Linear regression
+
+- Suppose you are tasked with building a machine learning algorithm that predicts the son's height $Y$ using the father's height $X$.
+
+- Let's generate testing and training sets:
+
+```{r, message=FALSE, warning=FALSE} 
+y <- galton_heights$son 
+test_index <- createDataPartition(y, times = 1, p = 0.5, list = FALSE) 
+train_set <- galton_heights |> slice(-test_index) 
+test_set <- galton_heights |> slice(test_index) 
+``` 
+
+- In this case, if we were just ignoring the father's height and guessing the son's height, we would guess the average height of sons.
+
+
+
+## Linear regression
+
+```{r} 
+m <- mean(train_set$son) 
+m 
+``` 
+
+- Our root mean squared error is:
+
+```{r} 
+sqrt(mean((m - test_set$son)^2)) 
+``` 
+
+- Can we do better? In the regression chapter, we learned that if the pair $(X,Y)$ follow a bivariate normal distribution, the conditional expectation (what we want to estimate) is equivalent to the regression line:
+
+
+$$
+f(x) = \mbox{E}( Y  \mid  X= x ) = \beta_0 + \beta_1 x 
+$$
+
+
+
+## Linear regression
+
+- We can use least squares introduced least squares as a method for estimating the slope $\beta_0$ and intercept $\beta_1$:
+
+```{r} 
+fit <- lm(son ~ father, data = train_set) 
+fit$coef 
+``` 
+
+- This gives us an estimate of the conditional expectation:
+
+$$ \hat{f}(x) = 35 + 0.5 x $$ 
+
+## Linear regression
+
+- We can see that this does indeed provide an improvement over our guessing approach.
+
+
+
+
+```{r} 
+y_hat <- fit$coef[1] + fit$coef[2]*test_set$father 
+sqrt(mean((y_hat - test_set$son)^2)) 
+``` 
+
+
+
+## The `predict` function
+
+- The `predict` function is very useful for machine learning applications.
+
+- This function takes a fitted object from functions such as `lm` or `glm` (we learn about `glm` soon) and a data frame with the new predictors for which to predict.
+
+- So in our current example, we would use `predict` like this:
+
+```{r} 
+y_hat <- predict(fit, test_set) 
+``` 
+
+
+
+
+## The `predict` function
+
+- Using `predict`, we can get the same results as we did previously:
+
+```{r} 
+y_hat <- predict(fit, test_set) 
+sqrt(mean((y_hat - test_set$son)^2)) 
+``` 
+
+- `predict` does not always return objects of the same types; it depends on what type of object is sent to it.
+
+## The `predict` function
+
+- To learn about the specifics, you need to look at the help file specific for the type of fit object that is being used.
+
+- The `predict` is actually a special type of function in R (called a _generic function_) that calls other functions depending on what kind of object it receives.
+
+- So if `predict` receives an object coming out of the `lm` function, it will call `predict.lm`.
+
+
+
+## The `predict` function
+
+- If it receives an object coming out of `glm`, it calls `predict.glm`.
+
+- These two functions are similar but different.
+
+- You can learn more about the differences by reading the help files:
+
+```{r, eval=FALSE} 
+?predict.lm 
+?predict.glm 
+``` 
+
+- There are many other versions of `predict` and many machine learning algorithms have a `predict` function.
+
+
+
+## Logistic regression
+
+- The regression approach can be extended to categorical data.
+
+- In this section we first illustrate how, for binary data, one can simply assign numeric values of 0 and 1 to the outcomes $y$, and apply regression as if the data were continuous.
+
+- We will then point out a limitation with this approach and introduce _logistic regression_ as a solution.
+
+- Logistic regression is a specific case of a set of _generalized linear models_.
+
+
+
+## Logistic regression
+
+- To illustrate logistic regression, we will apply it to our previous predicting sex example.
+
+```{r, echo=FALSE} 
+data(heights) 
+y <- heights$sex 
+set.seed(2007) 
+test_index <- createDataPartition(y, times = 1, p = 0.5, list = FALSE) 
+test_set <- heights[test_index, ] 
+train_set <- heights[-test_index, ] 
+``` 
+
+- If we define the outcome $Y$ as 1 for females and 0 for males, and $X$ as the height, we are interested in the conditional probability:
+
+
+
+
+
+$$
+\mbox{Pr}( Y = 1 \mid X = x) 
+$$
+
+## Logistic regression
+
+- As an example, let's provide a prediction for a student that is 66 inches tall.
+
+- What is the conditional probability of being female if you are 66 inches tall? In our dataset, we can estimate this by rounding to the nearest inch and computing:
+
+```{r} 
+train_set |>  
+  filter(round(height) == 66) |> 
+  summarize(y_hat = mean(sex=="Female")) 
+``` 
+
+
+
+## Logistic regression
+
+- To construct a prediction algorithm, we want to estimate the proportion of the population that is female for any given height $X=x$, which we write as the conditional probability described above: $\mbox{Pr}( Y = 1 | X=x)$.
+
+- Let's see what this looks like for several values of $x$ (we will remove strata of $x$ with few data points):
+
+```{r height-and-sex-conditional-probabilities, eval=FALSE} 
+heights |>  
+  mutate(x = round(height)) |> 
+  group_by(x) |> 
+  filter(n() >= 10) |> 
+  summarize(prop = mean(sex == "Female")) |> 
+  ggplot(aes(x, prop)) + 
+  geom_point() 
+``` 
+
+
+## Logistic regression
+
+```{r height-and-sex-conditional-probabilities-run, echo=FALSE} 
+heights |>  
+  mutate(x = round(height)) |> 
+  group_by(x) |> 
+  filter(n() >= 10) |> 
+  summarize(prop = mean(sex == "Female")) |> 
+  ggplot(aes(x, prop)) + 
+  geom_point() 
+``` 
+
+
+## Logistic regression
+
+- Since the results from the plot above look close to linear, and it is the only approach we currently know, we will try regression.
+
+- We assume that:
+
+$$p(x) = \mbox{Pr}( Y = 1 | X=x)  = \beta_0 + \beta_1 x$$ 
+
+- Note: because $p_0(x) = 1 - p_1(x)$, we will only estimate $p_1(x)$ and drop the $_1$ index.
+
+- If we convert the factors to 0s and 1s, we can estimate $\beta_0$ and $\beta_1$ with least squares.
+
+
+
+## Logistic regression
+
+```{r} 
+lm_fit <- mutate(train_set, y = as.numeric(sex == "Female")) |>  
+  lm(y ~ height, data = _) 
+``` 
+
+- Once we have estimates $\hat{\beta}_0$ and $\hat{\beta}_1$, we can obtain an actual prediction.
+
+- Our estimate of the conditional probability $p(x)$ is:
+
+
+$$
+\hat{p}(x) = \hat{\beta}_0+ \hat{\beta}_1 x 
+$$
+
+- To form a prediction, we define a _decision rule_:  predict female if $\hat{p}(x) > 0.5$.
+
+
+
+## Logistic regression
+
+- We can compare our predictions to the outcomes using:
+
+```{r} 
+p_hat <- predict(lm_fit, test_set) 
+y_hat <- ifelse(p_hat > 0.5, "Female", "Male") |> factor() 
+confusionMatrix(y_hat, test_set$sex)$overall[["Accuracy"]] 
+``` 
+
+- We see this method does substantially better than guessing.
+
+
+
+## Generalized linear models
+
+- The function $\beta_0 + \beta_1 x$ can take any value including negatives and values larger than 1.
+
+- In fact, the estimate $\hat{p}(x)$ computed in the linear regression section does indeed become negative.
+
+```{r regression-prediction, eval=FALSE} 
+heights |>  
+  mutate(x = round(height)) |> 
+  group_by(x) |> 
+  filter(n() >= 10) |> 
+  summarize(prop = mean(sex == "Female")) |> 
+  ggplot(aes(x, prop)) + 
+  geom_point() +  
+  geom_abline(intercept = lm_fit$coef[1], slope = lm_fit$coef[2]) 
+``` 
+
+
+## Generalized linear models
+
+```{r regression-prediction-run, echo=FALSE} 
+heights |>  
+  mutate(x = round(height)) |> 
+  group_by(x) |> 
+  filter(n() >= 10) |> 
+  summarize(prop = mean(sex == "Female")) |> 
+  ggplot(aes(x, prop)) + 
+  geom_point() +  
+  geom_abline(intercept = lm_fit$coef[1], slope = lm_fit$coef[2]) 
+``` 
+
+
+## Generalized linear models
+
+- The range is:
+
+```{r} 
+range(p_hat) 
+``` 
+
+- But we are estimating a probability: $\mbox{Pr}( Y = 1 \mid X = x)$ which is constrained between 0 and 1.
+
+- The idea of generalized linear models (GLM) is to first define a distribution of $Y$ that is consistent with it's possible outcomes and.
+
+- then find a function $g$ so that $g(\mbox{Pr}( Y = 1 \mid X = x))$ can be modeled as a linear combination of predictors.
+
+
+
+
+## Generalized linear models
+
+- Logistic regression is the most commonly used GLM.
+
+- It is an extension of linear regression that assures that the estimate of  $\mbox{Pr}( Y = 1 \mid X = x)$ is between 0 and 1.
+
+- This approach makes use of the  _logistic_ transformation defined as:
+
+$$ g(p) = \log \frac{p}{1-p}.$$ 
+
+- This logistic transformation converts probability to log odds.
+
+
+
+## Generalized linear models
+
+- The odds tell us how much more likely it is something will happen compared to not happening.
+
+- $p=0.5$ means the odds are 1 to 1, thus the odds are 1.
+
+- If $p=0.75$, the odds are 3 to 1.
+
+- A nice characteristic of this transformation is that it converts probabilities to be symmetric around 0.
+
+## Generalized linear models
+
+- Here is a plot of $g(p)$ versus $p$:
+
+
+
+
+```{r p-versus-logistic-of-p, echo=FALSE} 
+p <- seq(0.01,.99,len=100) 
+qplot(p, log( p/(1-p) ), geom="line") 
+``` 
+
+
+## Generalized linear models
+
+- With _logistic regression_, we model the conditional probability directly with:
+
+
+$$ 
+g\left\{ \mbox{Pr}(Y = 1 \mid X=x) \right\} = \beta_0 + \beta_1 x 
+$$
+
+- With this model, we can no longer use least squares.
+
+- Instead we compute the _maximum likelihood estimate_ (MLE).
+
+- You can learn more about this concept in a [statistical theory textbook](http://www.amazon.com/Mathematical-Statistics-Analysis-Available-Enhanced/dp/0534399428).
+
+
+
+## Generalized linear models
+
+- In R, we can fit the logistic regression model with the function `glm`: generalized linear models.
+
+- This function is more general than logistic regression so we need to specify the model we want through the `family` parameter:
+
+```{r} 
+glm_fit <- train_set |>  
+  mutate(y = as.numeric(sex == "Female")) |> 
+  glm(y ~ height, data = _, family = "binomial") 
+``` 
+
+## Generalized linear models
+
+- We can obtain prediction using the predict function:
+
+```{r} 
+p_hat_logit <- predict(glm_fit, newdata = test_set, type = "response") 
+``` 
+
+
+- When using `predict` with a `glm` object, we have to specify that we want `type="response"` if we want the conditional probabilities, since the default is to return the logistic transformed values.
+
+- This model fits the data slightly better than the line:
+
+
+
+## Generalized linear models
+
+```{r conditional-prob-glm-fit, echo=FALSE } 
+tmp <- heights |>  
+  mutate(x = round(height)) |> 
+  group_by(x) |> 
+  filter(n() >= 10) |> 
+  summarize(prop = mean(sex == "Female"))  
+logistic_curve <- data.frame(x = seq(min(tmp$x), max(tmp$x))) |> 
+  mutate(p_hat = plogis(glm_fit$coef[1] + glm_fit$coef[2]*x)) 
+tmp |>  
+  ggplot(aes(x, prop)) + 
+  geom_point() + 
+  geom_line(data = logistic_curve, 
+             mapping = aes(x, p_hat), lty = 2) 
+``` 
+
+
+## Generalized linear models
+
+- Because we have an estimate $\hat{p}(x)$, we can obtain predictions:
+
+```{r} 
+y_hat_logit <- ifelse(p_hat_logit > 0.5, "Female", "Male") |> factor() 
+confusionMatrix(y_hat_logit, test_set$sex)$overall[["Accuracy"]] 
+``` 
+
+- The resulting predictions are similar.
+
+- This is because the two estimates of $p(x)$ are larger than 1/2 in about the same region of x:
+
+
+
+## Generalized linear models
+
+```{r glm-prediction, echo = FALSE} 
+data.frame(x = seq(min(tmp$x), max(tmp$x))) |> 
+  mutate(logistic = plogis(glm_fit$coef[1] + glm_fit$coef[2]*x), 
+         regression = lm_fit$coef[1] + lm_fit$coef[2]*x) |> 
+  gather(method, p_x, -x) |> 
+  ggplot(aes(x, p_x, color = method)) +  
+  geom_line() + 
+  geom_hline(yintercept = 0.5, lty = 5) 
+``` 
+
+
+## Generalized linear models
+
+- Both linear and logistic regressions provide an estimate for the conditional expectation:
+
+
+$$
+\mbox{E}(Y \mid X=x) 
+$$
+
+- which in the case of binary data is equivalent to the conditional probability:
+
+
+$$
+\mbox{Pr}(Y = 1 \mid X = x) 
+$$
+
+
+
+## More than one predictor
+
+- We now apply logistic regression to the two or seven data.
+
+- In this case, we are interested in estimating a conditional probability that depends on two variables.
+
+- The standard logistic regression model in this case will assume that.
+
+
+$$
+g\{\mbox{Pr}(Y=1 \mid X_1=x_1 , X_2 = x_2)\} =  
+\beta_0 + \beta_1 x_1 + \beta_2 x_2 
+$$
+
+
+
+## More than one predictor
+
+- with $g(p) = \log \frac{p}{1-p}$ the logistic function described in the previous section.
+
+- To fit the model we use the following code:
+
+```{r} 
+fit_glm <- glm(y ~ x_1 + x_2, data=mnist_27$train, family = "binomial") 
+p_hat_glm <- predict(fit_glm, mnist_27$test, type="response") 
+y_hat_glm <- factor(ifelse(p_hat_glm > 0.5, 7, 2)) 
+confusionMatrix(y_hat_glm, mnist_27$test$y)$overall["Accuracy"] 
+``` 
+
+- We see that logistic regression performs similarly to regression.
+
+
+## More than one predictor
+
+- This is not surprising, given that the estimate of  $\hat{p}(x_1, x_2)$ looks similar as well:
+
+
+```{r, echo=FALSE} 
+## We use this function to plot the estimated conditional probabilities 
+plot_cond_prob <- function(p_hat=NULL){ 
+  tmp <- mnist_27$true_p 
+  if(!is.null(p_hat)){ 
+    tmp <- mutate(tmp, p=p_hat) 
+  } 
+  tmp |> ggplot(aes(x_1, x_2, z=p, fill=p)) + 
+  geom_raster(show.legend = FALSE) + 
+  scale_fill_gradientn(colors=c("#F8766D","white","#00BFC4")) + 
+  stat_contour(breaks=c(0.5),color="black") 
+} 
+``` 
+
+
+## More than one predictor
+
+```{r logistic-p-hat-run, echo=FALSE} 
+p_hat <- predict(fit_glm, newdata = mnist_27$true_p, type = "response") 
+mnist_27$true_p |> mutate(p_hat = p_hat) |> 
+  ggplot(aes(x_1, x_2,  z=p_hat, fill=p_hat)) + 
+  geom_raster() + 
+  scale_fill_gradientn(colors=c("#F8766D","white","#00BFC4")) + 
+  stat_contour(breaks=c(0.5), color="black")  
+``` 
+
+
+## More than one predictor
+
+- Just like regression, the decision rule is a line, a fact that can be corroborated mathematically since.
+
+
+$$
+g^{-1}(\hat{\beta}_0 + \hat{\beta}_1 x_1 + \hat{\beta}_2 x_2) = 0.5 \implies \\
+\hat{\beta}_0 + \hat{\beta}_1 x_1 + \hat{\beta}_2 x_2 = g(0.5) = 0 \implies 
+x_2 = -\hat{\beta}_0/\hat{\beta}_2 -\hat{\beta}_1/\hat{\beta}_2 x_1
+$$
+
+- Thus $x_2$ is a linear function of $x_1$.
+
+
+
+## More than one predictor
+
+- This implies that, just like regression, our logistic regression approach has no chance of capturing the non-linear nature of the true $p(x_1,x_2)$.
+
+- Once we move on to more complex examples, we will see that linear regression and generalized linear regression are limited and not flexible enough to be useful for most machine learning challenges.
+
+- The new techniques we learn are essentially approaches to estimating the conditional probability in a way that is more flexible.
+

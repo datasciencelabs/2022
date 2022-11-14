@@ -270,6 +270,10 @@ ggplot(train_knn_cv, highlight = TRUE)
 names(train_knn$results) 
 ``` 
 
+## Cross validation
+
+- We can include these in the plot:
+
 ```{r accuracy-with-sd-bars, eval=FALSE} 
 train_knn$results |>  
   ggplot(aes(x = k, y = Accuracy)) + 

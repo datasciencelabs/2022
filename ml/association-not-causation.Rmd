@@ -444,10 +444,11 @@ admissions |> select(major, gender, admitted) |>
 
 - What's going on? This actually can happen if an uncounted confounder is driving most of the variability.
 
+## Example: UC Berkeley admissions
+
 - So let's define three variables: $X$ is 1 for men and 0 for women, $Y$ is 1 for those admitted and 0 otherwise, and $Z$ quantifies the selectivity of the major.
 
 
-## Example: UC Berkeley admissions
 
 - A gender bias claim would be based on the fact that $\mbox{Pr}(Y=1 | X = x)$ is higher for $x=1$ than $x=0$.
 
@@ -484,10 +485,10 @@ admissions |>
   geom_text() 
 ``` 
 
+- There seems to be association.
 
 ## Example: UC Berkeley admissions
 
-- There seems to be association.
 
 - The plot suggests that women were much more likely to apply to the two "hard" majors: gender and major's selectivity are confounded.
 
@@ -499,11 +500,8 @@ admissions |>
 
 ## Confounding explained graphically
 
-- The following plot shows the number of applicants that were admitted and those that were not by:
+- The following plots shows the number of applicants that were admitted and those that were not and breaks down the acceptances by major.
 
-
-
-## Confounding explained graphically
 
 ```{r confounding, echo=FALSE} 
 admissions |> 
@@ -538,8 +536,6 @@ admissions |>
 
 ## Confounding explained graphically
 
-
-- It also breaks down the acceptances by major.
 
 - This breakdown allows us to see that the majority of accepted men came from two majors: A and B.
 
