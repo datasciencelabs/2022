@@ -1,0 +1,36 @@
+## Exercises 
+1\. Create a simple dataset where the outcome grows 0.75 units on average for every increase in a predictor:  
+```{r, eval=FALSE} 
+n <- 1000 
+sigma <- 0.25 
+x <- rnorm(n, 0, 1) 
+y <- 0.75 * x + rnorm(n, 0, sigma) 
+dat <- data.frame(x = x, y = y) 
+``` 
+Use `rpart` to fit a regression tree and save the result to `fit`. 
+2\. Plot the final tree so that you can see where the partitions occurred. 
+3\. Make a scatterplot of `y` versus `x` along with the predicted values based on the fit. 
+4\. Now model with a random forest instead of a regression tree using `randomForest` from the __randomForest__ package, and remake the scatterplot with the prediction line. 
+5\. Use the function `plot` to see if the random forest has converged or if we need more trees. 
+6\. It seems that the default values for the random forest result in an estimate that is too flexible (not smooth). Re-run the random forest but this time with `nodesize` set at 50 and `maxnodes` set at 25. Remake the plot. 
+7\. We see that this yields smoother results. Let's use the `train` function to help us pick these values. From the __caret__ manual^[https://topepo.github.io/caret/available-models.html] we see that we can't tune the `maxnodes` parameter or the `nodesize` argument with `randomForest`, so we will use the __Rborist__ package and tune the `minNode` argument. Use the `train` function to try values `minNode <- seq(5, 250, 25)`. See which value minimizes the estimated RMSE. 
+8\. Make a scatterplot along with the prediction from the best fitted model. 
+9\. Use the `rpart` function to fit a classification tree to the `tissue_gene_expression` dataset. Use the `train` function to estimate the accuracy. Try out `cp` values of `seq(0, 0.05, 0.01)`. Plot the accuracy to report the results of the best model. 
+10\. Study the confusion matrix for the best fitting classification tree. What do you observe happening for placenta? 
+11\. Notice that placentas are called endometrium more often than placenta. Note also that the number of placentas is just six, and that, by default, `rpart` requires 20 observations before splitting a node. Thus it is not possible with these parameters to have a node in which placentas are the majority. Rerun the above analysis but this time permit `rpart` to split any node by using the argument `control = rpart.control(minsplit = 0)`. Does the accuracy increase? Look at the confusion matrix again. 
+12\. Plot the tree from the best fitting model obtained in exercise 11. 
+13\. We can see that with just six genes, we are able to predict the tissue type. Now let's see if we can do even better with a random forest. Use the `train` function and the `rf` method to train a random forest. Try out values of `mtry` ranging from, at least, `seq(50, 200, 25)`. What `mtry` value maximizes accuracy? To permit small `nodesize` to grow as we did with the classification trees, use the following argument: `nodesize = 1`.  This will take several seconds to run. If you want to test it out, try using smaller values with `ntree`. Set the seed to 1990. 
+14\. Use the function `varImp` on the output of `train` and save it to an object called `imp`.  
+15\. The `rpart` model we ran above produced a tree that used just six predictors. Extracting the predictor names is not straightforward, but can be done. If the output of the call to train was `fit_rpart`, we can extract the names like this: 
+```{r, eval=FALSE} 
+ind <- !(fit_rpart$finalModel$frame$var == "<leaf>") 
+tree_terms <-  
+  fit_rpart$finalModel$frame$var[ind] |> 
+  unique() |> 
+  as.character() 
+tree_terms 
+``` 
+What is the variable importance in the random forest call for these predictors? Where do they rank? 
+16\. Advanced: Extract the top 50 predictors based on importance, take a subset of `x` with just these predictors and apply the function `heatmap` to see how these genes behave across the tissues. We will introduce the `heatmap` function in Chapter \@ref(clustering). 
+
+ 
