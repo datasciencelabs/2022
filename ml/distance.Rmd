@@ -1,0 +1,328 @@
+---
+title: "Distance"
+author: "Rafael A. Irizarry"
+date: "`r lubridate::today()`"
+output:
+  ioslides_presentation:
+    fig_caption: no
+    fig_height: 5
+    fig_width: 7
+    out_width: "70%"
+  beamer_presentation: default
+  slidy_presentation: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(dslabs)
+library(gridExtra)
+library(ggthemes)
+ds_theme_set()
+options(digits = 3)
+knitr::opts_chunk$set(
+  comment = "#>",
+  collapse = TRUE,
+  cache = TRUE,
+  out.width = "70%",
+  fig.align = "center",
+  fig.width = 6,
+  fig.asp = 0.618,  # 1 / phi
+  fig.show = "hold"
+)
+
+img_path <- "img"
+```
+
+## Distance
+
+- Many of the analyses we perform with high-dimensional data relate directly or indirectly to distance.
+
+- Most clustering and machine learning techniques rely on being able to define distance between observations, using features or predictors.
+
+
+
+## Euclidean distance
+
+- As a review, let's define the distance between two points, $A$ and $B$, on a Cartesian plane.
+
+
+
+## Euclidean distance
+
+```{r euclidean-distance, echo=FALSE, out.width="35%"} 
+rafalib::mypar() 
+plot(c(0,1,1),c(0,0,1),pch=16,cex=2,xaxt="n",yaxt="n",xlab="",ylab="",bty="n",xlim=c(-0.25,1.25),ylim=c(-0.25,1.25)) 
+lines(c(0,1,1,0),c(0,0,1,0)) 
+text(0,.2,expression(paste('(A'[x]*',A'[y]*')')),cex=1.5) 
+text(1,1.2,expression(paste('(B'[x]*',B'[y]*')')),cex=1.5) 
+text(-0.1,0,"A",cex=2) 
+text(1.1,1,"B",cex=2) 
+``` 
+
+
+## Euclidean distance
+
+- The Euclidean distance between $A$ and $B$ is simply:
+
+
+$$
+\mbox{dist}(A,B) = \sqrt{ (A_x-B_x)^2 + (A_y-B_y)^2} 
+$$
+
+- This definition applies to the case of one dimension, in which the distance between two numbers is simply the absolute value of their difference.
+
+- So if our two one-dimensional numbers are $A$ and $B$, the distance is:
+
+
+$$
+\mbox{dist}(A,B) = \sqrt{ (A - B)^2 } = | A - B | 
+$$
+
+
+
+## Distance in higher dimensions
+
+- Earlier we introduced a training dataset with feature matrix measurements for 784 features.
+
+- For illustrative purposes, we will look at a random sample of 2s and 7s.
+
+```{r, warning=FALSE, message=FALSE} 
+library(tidyverse) 
+library(dslabs) 
+if(!exists("mnist")) mnist <- read_mnist() 
+set.seed(1995) 
+ind <- which(mnist$train$labels %in% c(2,7)) |> sample(500) 
+x <- mnist$train$images[ind,] 
+y <- mnist$train$labels[ind] 
+``` 
+
+- The predictors are in `x` and the labels in `y`.
+
+
+
+## Distance in higher dimensions
+
+- For the purposes of, for example, smoothing, we are interested in describing distance between observation; in this case, digits.
+
+- Later, for the purposes of selecting features, we might also be interested in finding pixels that _behave similarly_ across samples.
+
+- To define distance, we need to know what _points_ are since mathematical distance is computed between points.
+
+- With high dimensional data, points are no longer on the Cartesian plane.
+
+
+
+## Distance in higher dimensions
+
+- Instead, points are in higher dimensions.
+
+- We can no longer visualize them and need to think abstractly.
+
+- For example, predictors $\mathbf{X}_i$ are defined as a point in 784 dimensional space: $\mathbf{X}_i = (x_{i,1},\dots,x_{i,784})^\top$.
+
+- Once we define points this way, the Euclidean distance is defined very similarly as it was for two dimensions.
+
+- For example, the distance between the predictors for two observations, say observations $i=1$ and $i=2$, is:
+
+
+
+## Distance in higher dimensions
+
+
+$$
+\mbox{dist}(1,2) = \sqrt{ \sum_{j=1}^{784} (x_{1,j}-x_{2,j })^2 } 
+$$
+
+- This is just one non-negative number, just as it is for two dimensions.
+
+
+
+## Euclidean distance example
+
+- The labels for the first three observations are:
+
+```{r} 
+y[1:3] 
+``` 
+
+- The vectors of predictors for each of these observations are:
+
+```{r} 
+x_1 <- x[1,] 
+x_2 <- x[2,] 
+x_3 <- x[3,] 
+``` 
+
+- The first and third numbers are sevens and the second one is a two.
+
+- We expect the distances between the same number:
+
+
+
+## Euclidean distance example
+
+```{r} 
+sqrt(sum((x_1 - x_2)^2)) 
+``` 
+
+- to be smaller than between different numbers:
+
+```{r} 
+sqrt(sum((x_1 - x_3)^2)) 
+sqrt(sum((x_2 - x_3)^2)) 
+``` 
+
+- As expected, the 7s are closer to each other.
+
+- A faster way to compute this is using matrix algebra:
+
+```{r} 
+sqrt(crossprod(x_1 - x_2)) 
+sqrt(crossprod(x_1 - x_3)) 
+sqrt(crossprod(x_2 - x_3)) 
+``` 
+
+
+
+## Euclidean distance example
+
+- We can also compute **all** the distances at once relatively quickly using the function `dist`, which computes the distance between each row and produces an object of class `dist`:
+
+```{r} 
+d <- dist(x) 
+class(d) 
+``` 
+
+- There are several machine learning related functions in R that take objects of class `dist` as input.
+
+- To access the entries using row and column indices, we need to coerce it into a matrix.
+
+- We can see the distance we calculated above like this:
+
+
+
+## Euclidean distance example
+
+```{r} 
+as.matrix(d)[1:3,1:3] 
+``` 
+
+- We can quickly see an image of these distances using this code:
+
+```{r distance-image, fig.width = 4, fig.height = 4, eval=FALSE} 
+image(as.matrix(d)) 
+``` 
+
+- If we order this distance by the labels, we can see that, in general, the twos are closer to each other and the sevens are closer to each other:
+
+```{r eval=FALSE} 
+image(as.matrix(d)[order(y), order(y)]) 
+``` 
+
+```{r diatance-image-ordered, fig.width = 4, fig.height = 4, out.width="50%", echo=FALSE} 
+rafalib::mypar() 
+image(as.matrix(d)[order(y), order(y)]) 
+``` 
+
+
+
+## Euclidean distance example
+
+- One thing we notice here is that there appears to be more uniformity in how the sevens are drawn, since they appear to be closer (more red) to other sevens than twos are to other twos.
+
+
+
+## Predictor space
+
+- _Predictor space_ is a concept that is often used to describe machine learning algorithms.
+
+- The term _space_ refers to a mathematical definition that we don't describe in detail here.
+
+- Instead, we provide a simplified explanation to help understand the term predictor space when used in the context of machine learning algorithms.
+
+- The predictor space can be thought of as the collection of all possible vectors of predictors that should be considered for the machine learning challenge in question.
+
+
+
+## Predictor space
+
+- Each member of the space is referred to as a _point_.
+
+- For example, in the 2 or 7 dataset, the predictor space consists of all pairs $(x_1, x_2)$ such that both $x_1$ and $x_2$ are within 0 and 1.
+
+- This particular _space_ can be represented graphically as a square.
+
+- In the MNIST dataset the predictor space consists of all 784-th dimensional vectors with each vector element an integer between 0 and 256.
+
+
+
+## Predictor space
+
+- An essential element of a predictor space is that we need to define a function that provides the distance between any two points.
+
+- In most cases we use Euclidean distance, but there are other possibilities.
+
+- A particular case in which we can't simply use Euclidean distance is when we have categorical predictors.
+
+- Defining a predictor space is useful in machine learning because we do things like define neighborhoods of points, as required by many smoothing techniques.
+
+
+
+## Predictor space
+
+- For example, we can define a neighborhood as all the points that are within 2 units away from a predefined center.
+
+- If the points are two-dimensional and we use Euclidean distance, this neighborhood is graphically represented as a circle with radius 2.
+
+- In three dimensions the neighborhood is a sphere.
+
+- We will soon learn about algorithms that partition the space into non-overlapping regions and then make different predictions for each region using the data in the region.
+
+
+
+## Distance between predictors
+
+- We can also compute distances between predictors.
+
+- If $N$ is the number of observations, the distance between two predictors, say 1 and 2, is:
+
+
+$$
+\mbox{dist}(1,2) = \sqrt{ \sum_{i=1}^{N} (x_{i,1}-x_{i,2})^2 } 
+$$
+
+- To compute the distance between all pairs of the 784 predictors, we can transpose the matrix first and then use `dist`:
+
+```{r} 
+d <- dist(t(x)) 
+dim(as.matrix(d)) 
+``` 
+
+
+
+## Distance between predictors
+
+- An interesting thing to note here is that if we pick a predictor (a pixel), we can see which pixels are close.
+
+- That is, the pair of pixels either have ink in the same images (small distance) or they don't (large distance).
+
+- The distance between, for example, and all other pixels is given by:
+
+```{r} 
+d_492 <- as.matrix(d)[492,] 
+``` 
+
+- We can now see the spatial pattern of these distances with the following code:
+
+```{r distnace-rows, fig.width = 4, fig.height = 4} 
+image(1:28, 1:28, matrix(d_492, 28, 28)) 
+``` 
+
+
+
+## Distance between predictors
+
+- Not surprisingly, points physically nearby are mathematically closer.
+
+- -->.
+

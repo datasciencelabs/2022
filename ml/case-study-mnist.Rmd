@@ -1,0 +1,467 @@
+---
+title: "Case Study Mnist"
+author: "Rafael A. Irizarry"
+date: "`r lubridate::today()`"
+output:
+  ioslides_presentation:
+    fig_caption: no
+    fig_height: 5
+    fig_width: 7
+    out_width: "70%"
+  beamer_presentation: default
+  slidy_presentation: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(dslabs)
+library(gridExtra)
+library(ggthemes)
+ds_theme_set()
+options(digits = 3)
+knitr::opts_chunk$set(
+  comment = "#>",
+  collapse = TRUE,
+  cache = TRUE,
+  out.width = "70%",
+  fig.align = "center",
+  fig.width = 6,
+  fig.asp = 0.618,  # 1 / phi
+  fig.show = "hold"
+)
+
+img_path <- "img"
+```
+
+## Machine learning in practice
+
+- Now that we have learned several methods and explored them with illustrative examples, we are going to try them out on a real example: the MNIST digits.
+
+- We can load this data using the following __dslabs__ package:
+
+```{r, message=FALSE, warning=FALSE, eval=FALSE} 
+library(tidyverse) 
+library(randomForest)
+library(dslabs) 
+mnist <- read_mnist() 
+``` 
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE} 
+library(tidyverse) 
+library(randomForest)
+library(dslabs) 
+if(!exists("mnist")) mnist <- read_mnist() 
+``` 
+
+
+
+## Machine learning in practice
+
+- The dataset includes two components, a training set and test set:
+
+```{r} 
+names(mnist) 
+``` 
+
+- Each of these components includes a matrix with features in the columns:
+
+```{r} 
+dim(mnist$train$images) 
+``` 
+
+## Machine learning in practice
+
+- and vector with the classes as integers:
+
+```{r} 
+class(mnist$train$labels) 
+table(mnist$train$labels) 
+``` 
+
+
+
+## Machine learning in practice
+
+- Because we want this example to run on a small laptop and in less than one hour, we will consider a subset of the dataset.
+
+- We will sample 10,000 random rows from the training set and 1,000 random rows from the test set:
+
+```{r} 
+set.seed(1990) 
+index <- sample(nrow(mnist$train$images), 10000) 
+x <- mnist$train$images[index,] 
+y <- factor(mnist$train$labels[index]) 
+index <- sample(nrow(mnist$test$images), 1000) 
+x_test <- mnist$test$images[index,] 
+y_test <- factor(mnist$test$labels[index]) 
+``` 
+
+
+
+## Preprocessing
+
+- In machine learning, we often transform predictors before running the machine algorithm.
+
+- We also remove predictors that are clearly not useful.
+
+- We call these steps _preprocessing_.
+
+- Examples of preprocessing include standardizing the predictors, taking the log transform of some predictors, removing predictors that are highly correlated with others, and removing predictors with very few non-unique values or close to zero variation.
+
+- We show an example below.
+
+
+
+## Preprocessing
+
+- We can run the `nearZero` function from the __caret__ package to see that several features do not vary much from observation to observation.
+
+- We can see that there is a large number of features with 0 variability:
+
+```{r pixel-sds, message=FALSE, warning=FALSE, eval=FALSE} 
+library(matrixStats) 
+sds <- colSds(x) 
+qplot(sds, bins = 256) 
+``` 
+
+
+## Preprocessing
+
+```{r pixel-sds-run, message=FALSE, warning=FALSE, echo=FALSE} 
+library(matrixStats) 
+sds <- colSds(x) 
+qplot(sds, bins = 256) 
+``` 
+
+
+## Preprocessing
+
+- This is expected because there are parts of the image that rarely contain writing (dark pixels).
+
+- The __caret__ packages includes a function that recommends features to be removed due to _near zero variance_:
+
+```{r, message=FALSE, warning=FALSE} 
+library(caret) 
+nzv <- nearZeroVar(x) 
+``` 
+
+## Preprocessing
+
+- We can see the columns recommended for removal:
+
+```{r, eval=FALSE} 
+image(matrix(1:784 %in% nzv, 28, 28)) 
+``` 
+
+```{r near-zero-image, fig.width = 4, fig.height = 4, out.width="50%", echo=FALSE} 
+rafalib::mypar() 
+image(matrix(1:784 %in% nzv, 28, 28)) 
+``` 
+
+## Preprocessing
+
+- So we end up keeping this number of columns:
+
+
+```{r} 
+col_index <- setdiff(1:ncol(x), nzv) 
+length(col_index) 
+``` 
+
+- Now we are ready to fit some models.
+
+## Preprocessing
+
+- Before we start, we need to add column names to the feature matrices as these are required by __caret__:
+
+```{r} 
+colnames(x) <- 1:ncol(mnist$train$images) 
+colnames(x_test) <- colnames(x) 
+``` 
+
+
+
+## k-nearest neighbor
+
+- Let's start with kNN.
+
+- The first step is to optimize for $k$.
+
+- Keep in mind that when we run the algorithm, we will have to compute a distance between each observation in the test set and each observation in the training set.
+
+- There are a lot of computations.
+
+- We will therefore use k-fold cross validation to improve speed.
+
+
+
+## k-nearest neighbor
+
+- If we run the following code, the computing time on a standard laptop will be several minutes.
+
+```{r mnist-knn-fit, eval=FALSE} 
+control <- trainControl(method = "cv", number = 10, p = .9) 
+train_knn <- train(x[ ,col_index], y,  
+                   method = "knn",  
+                   tuneGrid = data.frame(k = c(3,5,7)), 
+                   trControl = control) 
+train_knn 
+``` 
+
+- In general, it is a good idea to try a test run with a subset of the data to get an idea of timing before we start running code that might take hours to complete.
+
+
+## k-nearest neighbor
+
+- We can do this as follows:
+
+```{r, eval = FALSE} 
+n <- 1000 
+b <- 2 
+index <- sample(nrow(x), n) 
+control <- trainControl(method = "cv", number = b, p = .9) 
+train_knn <- train(x[index, col_index], y[index],  
+                   method = "knn",  
+                   tuneGrid = data.frame(k = c(3,5,7)), 
+                   trControl = control) 
+``` 
+
+- We can then increase `n` and `b` and try to establish a pattern of how they affect computing time.
+
+- to get an idea of how long the fitting process will take for larger values of `n` and `b`.
+
+
+
+## k-nearest neighbor
+
+- You want to know if a function is going to take hours, or even days, before you run it.
+
+- Once we optimize our algorithm, we can fit it to the entire dataset:
+
+```{r} 
+fit_knn <- knn3(x[, col_index], y,  k = 3) 
+``` 
+
+- We now achieve a high accuracy:
+
+```{r} 
+y_hat_knn <- predict(fit_knn, x_test[, col_index], type="class") 
+cm <- confusionMatrix(y_hat_knn, factor(y_test)) 
+cm$overall["Accuracy"] 
+``` 
+
+
+
+## k-nearest neighbor
+
+- From the specificity and sensitivity, we also see that 8s are the hardest to detect and the most commonly incorrectly predicted digit is 7.
+
+```{r} 
+cm$byClass[,1:2] 
+``` 
+ 
+## Random forest
+
+- Now let's see if we can do even better with the random forest algorithm.
+
+- With random forest, computation time is a challenge.
+
+- For each forest, we need to build hundreds of trees.
+
+- We also have several parameters we can tune.
+
+
+
+## Random forest
+
+- Because with random forest the fitting is the slowest part of the procedure rather than the predicting (as with kNN), we will use only five-fold cross validation.
+
+- We will also reduce the number of trees that are fit since we are not yet building our final model.
+
+- Finally, to compute on a smaller dataset, we will take a random sample of the observations when constructing each tree.
+
+- We can change this number with the `nSamp` argument.
+
+
+
+## Random forest
+
+```{r mnist-rf, message=FALSE, warning=FALSE, eval=FALSE} 
+library(randomForest) 
+control <- trainControl(method="cv", number = 5) 
+grid <- data.frame(mtry = c(1, 5, 10, 25, 50, 100)) 
+train_rf <-  train(x[, col_index], y,  
+                   method = "rf",  
+                   ntree = 150, 
+                   trControl = control, 
+                   tuneGrid = grid, 
+                   nSamp = 5000) 
+``` 
+
+- Now that we have optimized our algorithm, we are ready to fit our final model:
+
+```{r, eval=FALSE} 
+fit_rf <- randomForest(x[, col_index], y,  
+                       minNode = train_rf$bestTune$mtry) 
+``` 
+
+
+
+
+```{r, echo=FALSE} 
+## we hard wire to 10 do make book compilation faster. 
+## we ran previous code once to determin 10 was the best 
+fit_rf <- randomForest(x[, col_index], y,  minNode = 10) 
+``` 
+
+## Random forest
+
+- To check that we ran enough trees we can use the plot function:
+
+
+
+
+```{r} 
+plot(fit_rf) 
+``` 
+
+
+## Random forest
+
+- We see that we achieve high accuracy:
+
+```{r} 
+y_hat_rf <- predict(fit_rf, x_test[ ,col_index]) 
+cm <- confusionMatrix(y_hat_rf, y_test) 
+cm$overall["Accuracy"] 
+``` 
+
+## Random forest
+
+- Here are some examples of the original images and our calls:
+
+```{r mnist-examples-of-calls, echo=FALSE, out.width="100%"} 
+rafalib::mypar(3,4) 
+for(i in 1:12){ 
+  image(matrix(x_test[i,], 28, 28)[, 28:1],  
+        main = paste("Our prediction:", y_hat_rf[i]), 
+        xaxt="n", yaxt="n") 
+} 
+``` 
+
+
+
+
+## Random forest
+
+- With some further tuning, we can get even higher accuracy.
+
+
+
+## Variable importance
+
+- The following function computes the importance of each feature:
+
+```{r} 
+imp <- importance(fit_rf) 
+``` 
+
+## Variable importance
+
+- We can see which features are being used most by plotting an image:
+
+```{r eval=FALSE} 
+mat <- rep(0, ncol(x)) 
+mat[col_index] <- imp 
+image(matrix(mat, 28, 28)) 
+``` 
+
+```{r importance-image, fig.width = 4, fig.height = 4, out.width="50%", echo=FALSE} 
+rafalib::mypar() 
+mat <- rep(0, ncol(x)) 
+mat[col_index] <- imp 
+image(matrix(mat, 28, 28)) 
+``` 
+
+
+
+## Visual assessments
+
+- An important part of data analysis is visualizing results to determine why we are failing.
+
+- How we do this depends on the application.
+
+- Below we show the images of digits for which we made an incorrect prediction.
+
+- We can compare what we get with kNN to random forest.
+
+
+
+## Visual assessments
+
+```{r knn-images, echo=FALSE, out.width="100%", fig.width=6, fig.asp=0.3} 
+p_max <- predict(fit_knn, x_test[,col_index]) 
+p_max <- apply(p_max, 1, max) 
+ind  <- which(y_hat_knn != y_test) 
+ind <- ind[order(p_max[ind], decreasing = TRUE)] 
+rafalib::mypar(1,4) 
+for(i in ind[1:4]){ 
+  image(matrix(x_test[i,], 28, 28)[, 28:1],  
+        main = paste0("Pr(",y_hat_knn[i],")=",round(p_max[i], 2)," but is a ",y_test[i]), 
+        xaxt="n", yaxt="n") 
+} 
+``` 
+
+## Visual assessments
+
+
+- Here are some errors for the random forest:
+
+
+```{r rf-images,, echo=FALSE, out.width="100%", fig.width=6, fig.asp=0.3} 
+p_max <- predict(fit_rf, x_test[,col_index], type = "prob")  
+p_max <- p_max / rowSums(p_max) 
+p_max <- apply(p_max, 1, max) 
+ind  <- which(y_hat_rf != y_test) 
+ind <- ind[order(p_max[ind], decreasing = TRUE)] 
+rafalib::mypar(1,4) 
+for(i in ind[1:4]){ 
+  image(matrix(x_test[i,], 28, 28)[, 28:1],  
+        main = paste0("Pr(",y_hat_rf[i],")=",round(p_max[i], 2), " but is a ",y_test[i]), 
+        xaxt="n", yaxt="n") 
+} 
+``` 
+
+
+## Visual assessments
+
+- By examining errors like this we often find specific weaknesses to algorithms or parameter choices and can try to correct them.
+
+
+
+## Ensembles
+
+- The idea of an ensemble is similar to the idea of combining data from different pollsters to obtain a better estimate of the true support for each candidate.
+
+- In machine learning, one can usually greatly improve the final results by combining the results of different algorithms.
+
+- Here is a simple example where we compute new class probabilities by taking the average of random forest and kNN.
+
+
+
+
+## Ensembles
+
+- We can see that the accuracy improves to 0.96:
+
+```{r} 
+p_rf <- predict(fit_rf, x_test[,col_index], type = "prob")   
+p_rf<- p_rf / rowSums(p_rf) 
+p_knn  <- predict(fit_knn, x_test[,col_index]) 
+p <- (p_rf + p_knn)/2 
+y_pred <- factor(apply(p, 1, which.max)-1) 
+confusionMatrix(y_pred, y_test)$overall["Accuracy"] 
+``` 
+
+
+
