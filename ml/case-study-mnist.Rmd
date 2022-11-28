@@ -292,7 +292,7 @@ control <- trainControl(method="cv", number = 5)
 grid <- data.frame(mtry = c(1, 5, 10, 25, 50, 100)) 
 train_rf <-  train(x[, col_index], y,  
                    method = "rf",  
-                   ntree = 150, 
+                   ntree = 15, 
                    trControl = control, 
                    tuneGrid = grid, 
                    nSamp = 5000) 
@@ -302,7 +302,8 @@ train_rf <-  train(x[, col_index], y,
 
 ```{r, eval=FALSE} 
 fit_rf <- randomForest(x[, col_index], y,  
-                       minNode = train_rf$bestTune$mtry) 
+                       mtry = train_rf$bestTune$mtry,
+                       minNode = 10) 
 ``` 
 
 
@@ -311,7 +312,7 @@ fit_rf <- randomForest(x[, col_index], y,
 ```{r, echo=FALSE} 
 ## we hard wire to 10 do make book compilation faster. 
 ## we ran previous code once to determin 10 was the best 
-fit_rf <- randomForest(x[, col_index], y,  minNode = 10) 
+fit_rf <- randomForest(x[, col_index], y, mtry = 15, minNode = 10) 
 ``` 
 
 ## Random forest
@@ -398,6 +399,8 @@ image(matrix(mat, 28, 28))
 
 
 ## Visual assessments
+
+- Here are some errors made by kNN:
 
 ```{r knn-images, echo=FALSE, out.width="100%", fig.width=6, fig.asp=0.3} 
 p_max <- predict(fit_knn, x_test[,col_index]) 

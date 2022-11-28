@@ -483,11 +483,12 @@ lm(rating ~ as.factor(movieId) + as.factor(userId))
 
 - but, for the reasons described earlier, we won't.
 
-- Instead, we will compute an approximation by computing $\hat{\mu}$ and $\hat{b}_i$ and estimating $\hat{b}_u$ as the average of $y_{u,i} - \hat{\mu} - \hat{b}_i$:
 
 
 
 ## User effects
+
+- Instead, we will compute an approximation by computing $\hat{\mu}$ and $\hat{b}_i$ and estimating $\hat{b}_u$ as the average of $y_{u,i} - \hat{\mu} - \hat{b}_i$:
 
 ```{r} 
 user_avgs <- train_set |>  
@@ -495,6 +496,8 @@ user_avgs <- train_set |>
   group_by(userId) |> 
   summarize(b_u = mean(rating - mu - b_i)) 
 ``` 
+
+## User effects
 
 - We can now construct predictors and see how much the RMSE improves:
 
@@ -522,30 +525,7 @@ rmse_results <- bind_rows(rmse_results,
 
 - Despite the large movie to movie variation, our improvement in RMSE was only about 5%.
 
-- Let's explore where we made mistakes in our first model, using only movie effects $b_i$.
-
-## Challenges
-
-- Here are the 10 largest mistakes:
-
-```{r} 
-test_set |>  
-  left_join(movie_avgs, by='movieId') |> 
-  mutate(residual = rating - (mu + b_i)) |> 
-  arrange(desc(abs(residual))) |>   
-  slice(1:10) |>  
-  pull(title) 
-``` 
-
-
-
-## Challenges
-
-- These all seem like obscure movies.
-
-- Many of them have large predictions.
-
-- Let's look at the top 10 worst and best movies based on $\hat{b}_i$.
+- Let's look at the top 10 worst and best movies based on $\hat{b}_i$ to notice a problem.
 
 ## Challenges
 
@@ -700,9 +680,7 @@ cor(x, use="pairwise.complete")
 
 - But how can we model this?
 
-
-
-
+## End
 
 
 <!-- ## Regularization -->
