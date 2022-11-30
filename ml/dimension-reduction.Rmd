@@ -100,7 +100,7 @@ x <- rbind(mvrnorm(n / 2, c(69, 69), Sigma),
 
 ## Preserving distance
 
-```{r simulated-twin-heights, fig.width=3, fig.height=3, echo=FALSE, message=FALSE, out.width="50%"} 
+```{r simulated-twin-heights, fig.width=3, fig.asp=1, echo=FALSE, message=FALSE, out.width="50%"} 
 lim <- c(48, 78) 
 rafalib::mypar() 
 plot(x, xlim=lim, ylim=lim) 
@@ -109,9 +109,7 @@ plot(x, xlim=lim, ylim=lim)
 
 ## Preserving distance
 
-- -->.
-
-```{r distance-illustration, fig.width=3, fig.height=3, echo=FALSE, out.width="40%"} 
+```{r distance-illustration, fig.width=3, fig.asp=1, echo=FALSE, out.width="50%"} 
 rafalib::mypar() 
 plot(x, xlim=lim, ylim=lim) 
 lines(x[c(1, 2),], col = "blue", lwd = 2) 
@@ -158,13 +156,15 @@ as.matrix(d)[2, 51]
 z <- x[,1] 
 ``` 
 
-- Here are the approximate distances versus the original distances:
 
 
 
 ## Preserving distance
 
-```{r one-dim-approx-to-dist, echo = FALSE, fig.width=3, fig.height=3, out.width="40%"} 
+- Here are the approximate distances versus the original distances:
+
+
+```{r one-dim-approx-to-dist, echo = FALSE, fig.width=3, fig.asp=1, out.width="50%"} 
 rafalib::mypar() 
 plot(dist(x), dist(z)) 
 abline(0,1, col = "red") 
@@ -179,6 +179,8 @@ abline(0,1, col = "red")
 
 - This is to be expected because we are adding more positive quantities in the distance calculation as we increase the number of dimensions.
 
+## Preserving distance
+
 - If instead we use an average, like this.
 
 $$\sqrt{ \frac{1}{2} \sum_{j=1}^2 (X_{1,j}-X_{2,j})^2 },$$ 
@@ -186,16 +188,13 @@ $$\sqrt{ \frac{1}{2} \sum_{j=1}^2 (X_{1,j}-X_{2,j})^2 },$$
 - then the underestimation goes away.
 
 
-
-## Preserving distance
-
 - We divide the distance by $\sqrt{2}$ to achieve the correction.
 
 
 
 ## Preserving distance
 
-```{r distance-approx-1, echo = FALSE, fig.width=3, fig.height=3, out.width="40%"} 
+```{r distance-approx-1, echo = FALSE, fig.width=3, fig.asp=1, out.width="50%"} 
 rafalib::mypar() 
 plot(dist(x) / sqrt(2), dist(z)) 
 abline(0, 1, col = "red") 
@@ -232,7 +231,7 @@ z  <- cbind((x[,2] + x[,1])/2,  x[,2] - x[,1])
 
 ## Preserving distance
 
-```{r rotation, fig.width=3, fig.height=3, echo=FALSE, out.width="40%"} 
+```{r rotation, fig.width=3, fig.asp=1, echo=FALSE, out.width="50%"} 
 rafalib::mypar() 
 plot(z, xlim=lim, ylim = lim - mean(lim)) 
 lines(z[c(1,2),], col = "blue", lwd = 2) 
@@ -247,13 +246,14 @@ points(z[c(1,2,51),], pch = 16)
 
 - If the line is completely flat, we lose no information at all.
 
-- Using the first dimension of this transformed matrix we obtain an even better approximation:
 
 
 
 ## Preserving distance
 
-```{r distance-approx-2, echo=FALSE, fig.width=3, fig.height=3, out.width="40%"} 
+- Using the first dimension of this transformed matrix we obtain an even better approximation:
+
+```{r distance-approx-2, echo=FALSE, fig.width=3, fig.asp=1, out.width="50%"} 
 rafalib::mypar() 
 plot(dist(x), dist(z[,1])*sqrt(2)) 
 abline(0,1, col = "red") 
@@ -272,7 +272,7 @@ sd(dist(x) - dist(z[,1])*sqrt(2))
 
 
 
-## Linear transformations (advanced)
+## Linear transformations
 
 - Note that each row of $X$ was transformed using a linear transformation.
 
@@ -290,7 +290,7 @@ $$Z_{i,2} = a_{1,2} X_{i,1} + a_{2,2} X_{i,2}$$
 
 
 
-## Linear transformations (advanced)
+## Linear transformations
 
 - We can also use linear transformation to get $X$ back from $Z$:
 
@@ -302,11 +302,12 @@ $$X_{i,2} = b_{2,1} Z_{i,1} + b_{2,2} Z_{i,2}$$
 
 - with $b_{2,1} = 1$ and $a_{1,2} = -0.5$.
 
-- If you are familiar with linear algebra, we can write the operation we just performed like this:
 
 
 
-## Linear transformations (advanced)
+## Linear transformations
+
+- We can write the operation we just performed like this:
 
 
 $$
@@ -321,7 +322,7 @@ $$
 
 
 
-## Linear transformations (advanced)
+## Linear transformations
 
 - And that we can transform back by simply multiplying by $A^{-1}$ as follows:
 
@@ -338,13 +339,13 @@ $$
 
 
 
-## Linear transformations (advanced)
+## Linear transformations
 
 - Dimension reduction can often be described as applying a transformation $A$ to a matrix $X$ with many columns that _moves_ the information contained in $X$ to the first few columns of $Z=AX$, then keeping just these few informative columns, thus reducing the dimension of the vectors contained in the rows.
 
 
 
-## Orthogonal transformations (advanced)
+## Orthogonal transformations
 
 - Note that we divided the above by $\sqrt{2}$ to account for the differences in dimensions when comparing a 2 dimension distance to a 1 dimension distance.
 
@@ -361,7 +362,7 @@ $$
 
 
 
-## Orthogonal transformations (advanced)
+## Orthogonal transformations
 
 - Remember that if the columns are centered to have average 0, then the sum of squares is equivalent to the variance or standard deviation squared.
 
@@ -372,26 +373,26 @@ z[,1] <- (x[,1] + x[,2]) / sqrt(2)
 z[,2] <- (x[,2] - x[,1]) / sqrt(2) 
 ``` 
 
+
+
+
+## Orthogonal transformations
+
 - This gives us a transformation that preserves the distance between any two points:
-
-
-
-## Orthogonal transformations (advanced)
 
 ```{r} 
 max(dist(z) - dist(x)) 
 ``` 
 
-```{r orthogonal-transformation, fig.width=3, fig.height=3, echo=FALSE} 
+```{r orthogonal-transformation, fig.width=3, fig.asp=1, echo=FALSE, out.width="40%"} 
 rafalib::mypar() 
 plot(dist(x), dist(z)) 
 abline(0, 1, col = "red") 
 ``` 
 
 
-## Orthogonal transformations (advanced)
+## Orthogonal transformations
 
-- -->.
 
 - and an improved approximation if we use just the first dimension:
 
@@ -405,7 +406,7 @@ sd(dist(x) - dist(z[,1]))
 
 
 
-## Orthogonal transformations (advanced)
+## Orthogonal transformations
 
 - For example, one-dimensional data exploration of the first dimension of $Z$ clearly shows that there are two groups, adults and children:
 
@@ -415,7 +416,7 @@ qplot(z[,1], bins = 20, color = I("black"))
 ``` 
 
 
-## Orthogonal transformations (advanced)
+## Orthogonal transformations
 
 ```{r twins-pc-1-hist-run, message=FALSE, warning=FALSE, echo=FALSE} 
 library(tidyverse) 
@@ -423,7 +424,7 @@ qplot(z[,1], bins = 20, color = I("black"))
 ``` 
 
 
-## Orthogonal transformations (advanced)
+## Orthogonal transformations
 
 - We successfully reduced the number of dimensions from two to one with very little loss of information.
 
@@ -439,11 +440,12 @@ cor(x[,1], x[,2])
 cor(z[,1], z[,2]) 
 ``` 
 
+
+
+
+## Orthogonal transformations
+
 - One way this insight may be useful in a machine learning application is that we can reduce the complexity of a model by using just $Z_1$ rather than both $X_1$ and $X_2$.
-
-
-
-## Orthogonal transformations (advanced)
 
 - It is actually common to obtain data with several highly correlated predictors.
 
@@ -479,13 +481,20 @@ sum(colMeans(x^2))
 sum(colMeans(z^2)) 
 ``` 
 
-- However, while the variability in the two columns of `X` is about the same, in the transformed version $Z$ 99% of the variability is included in just the first dimension:
+- However, while the variability in the two columns of `X` is about the same, in the transformed version $Z$ more than 99% of the variability is included in just the first dimension:
+
+```{r, echo=FALSE}
+options(digits = 6)
+```
 
 ```{r} 
 v <- colMeans(z^2) 
 v/sum(v) 
 ``` 
 
+```{r, echo=FALSE}
+options(digits = 3)
+```
 
 
 ## Principal component analysis
@@ -533,13 +542,14 @@ max(abs(a - b))
 
 - We can visualize these to see how the first component summarizes the data.
 
-- In the plot below red represents high values and blue negative values (later, in Section \@ref(factor-analysis), we learn why we call these weights and patterns):
 
 
 
 ## Principal component analysis
 
-```{r illustrate-pca-twin-heights, echo=FALSE, height = 5, out.width="70%"} 
+- In the plot below red represents high values and blue negative values:
+
+```{r illustrate-pca-twin-heights, echo=FALSE, height = 5, out.width="60%"} 
 illustrate_pca <- function(x, flip=1,  
                            pad = round((nrow(x)/2-ncol(x))*1/4),  
                            cex = 5, center = TRUE){ 
@@ -605,11 +615,12 @@ names(iris)
 
 - Let's compute the distance between each observation.
 
-- You can clearly see the three species with one species very different from the other two:
 
 
 
 ## Iris example
+
+- You can clearly see the three species with one species very different from the other two:
 
 ```{r, eval=FALSE} 
 x <- iris[,1:4] |> as.matrix() 
@@ -617,12 +628,14 @@ d <- dist(x)
 image(as.matrix(d), col = rev(RColorBrewer::brewer.pal(9, "RdBu"))) 
 ``` 
 
-```{r iris-distances, fig.width = 4, fig.height = 4, out.width="50%", echo=FALSE} 
+```{r iris-distances, fig.width = 4, fig.asp=1, out.width="40%", echo=FALSE} 
 rafalib::mypar() 
 x <- iris[,1:4] |> as.matrix() 
 d <- dist(x) 
 image(as.matrix(d), col = rev(RColorBrewer::brewer.pal(9, "RdBu"))) 
 ``` 
+
+## Iris example
 
 - Our predictors here have four dimensions, but three are very correlated:
 
@@ -643,13 +656,17 @@ pca <- prcomp(x)
 summary(pca) 
 ``` 
 
+## Iris example
+
 - The first two dimensions account for 97% of the variability.
 
 - Thus we should be able to approximate the distance very well with two dimensions.
 
+## Iris example
+
 - We can visualize the results of PCA:
 
-```{r illustrate-pca-twin-heights-iris, echo=FALSE, fig.height = 6, out.width="70%"} 
+```{r illustrate-pca-twin-heights-iris, echo=FALSE, fig.height = 6, out.width="60%"} 
 rafalib::mypar() 
 illustrate_pca(x) 
 ``` 
@@ -694,7 +711,7 @@ data.frame(pca$x[,1:2], Species=iris$Species) |>
 
 - We see that the first two dimensions preserve the distance:
 
-```{r dist-approx-4, message = FALSE, fig.height = 3, fig.width = 3, out.width="50%", eval=FALSE} 
+```{r dist-approx-4, message = FALSE, fig.height = 3, fig.asp = 1, out.width="60%", eval=FALSE} 
 d_approx <- dist(pca$x[, 1:2]) 
 qplot(d, d_approx) + geom_abline(color="red") 
 ``` 
@@ -702,7 +719,7 @@ qplot(d, d_approx) + geom_abline(color="red")
 
 ## Iris example
 
-```{r dist-approx-4-run, message = FALSE, fig.height = 3, fig.width = 3, out.width="50%", echo=FALSE} 
+```{r dist-approx-4-run, message = FALSE, fig.height = 3, fig.asp = 1, out.width="50%", echo=FALSE} 
 d_approx <- dist(pca$x[, 1:2]) 
 qplot(d, d_approx) + geom_abline(color="red") 
 ``` 
@@ -764,6 +781,8 @@ qplot(pc, pca$sdev)
 summary(pca)$importance[,1:5]  
 ``` 
 
+## MNIST example
+
 - And just by looking at the first two PCs we see information about the class.
 
 - Here is a random sample of 2,000 digits:
@@ -793,10 +812,7 @@ data.frame(PC1 = pca$x[,1], PC2 = pca$x[,2],
 - We can also _see_ the linear combinations on the grid to get an idea of what is getting weighted:
 
 
-
-## MNIST example
-
-```{r mnist-pca-1-4, echo = FALSE, out.width="100%", fig.width=6, fig.height=1.75} 
+```{r mnist-pca-1-4, echo = FALSE, out.width="100%", fig.width=6, fig.asp=0.3} 
 library(RColorBrewer) 
 tmp <- lapply( c(1:4,781:784), function(i){ 
     expand.grid(Row=1:28, Column=1:28) |> 
@@ -818,10 +834,7 @@ tmp |> filter(id<5) |>
 - The lower variance PCs appear related to unimportant variability in the corners:
 
 
-
-## MNIST example
-
-```{r mnist-pca-last,, echo = FALSE, out.width="100%", fig.width=6, fig.height=1.75} 
+```{r mnist-pca-last,, echo = FALSE, out.width="100%", fig.width=6, fig.asp=0.3} 
 tmp |> filter(id>5) |> 
   ggplot(aes(Row, Column, fill=value)) + 
   geom_raster() + 
@@ -836,6 +849,8 @@ tmp |> filter(id>5) |>
 - Now let's apply the transformation we learned with the training data to the test data, reduce the dimension and run knn on just a small number of dimensions.
 
 - We try 36 dimensions since this explains about 80% of the data.
+
+## MNIST example
 
 - First fit the model:
 
@@ -857,6 +872,8 @@ fit <- knn3(x_train, y)
 x_test <- sweep(mnist$test$images, 2, col_means) %*% pca$rotation 
 x_test <- x_test[,1:k] 
 ``` 
+
+## MNIST example
 
 - And we are ready to predict and see how we do:
 
