@@ -1,0 +1,732 @@
+---
+title: "Git"
+author: "Rafael A. Irizarry"
+date: "`r lubridate::today()`"
+output:
+  ioslides_presentation:
+    fig_caption: no
+    fig_height: 5
+    fig_width: 7
+    out_width: "70%"
+  beamer_presentation: default
+  slidy_presentation: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(dslabs)
+library(gridExtra)
+library(ggthemes)
+ds_theme_set()
+options(digits = 3)
+knitr::opts_chunk$set(
+  comment = "#>",
+  collapse = TRUE,
+  cache = TRUE,
+  out.width = "70%",
+  fig.align = "center",
+  fig.width = 6,
+  fig.asp = 0.618,  # 1 / phi
+  fig.show = "hold"
+)
+
+img_path <- "img"
+```
+
+## Git and GitHub
+
+```{r, echo=FALSE} 
+screenshots <- list.files(file.path(img_path, "windows-screenshots")) 
+screenshots <- file.path(img_path, "windows-screenshots", screenshots) 
+mac_screenshots <- list.files(file.path(img_path, "mac-screenshots")) 
+mac_screenshots <- file.path(img_path,"mac-screenshots", mac_screenshots) 
+``` 
+
+- Here we provide some details on Git and GitHub.
+
+- However, we are only scratching the surface.
+
+- To learn more about this topic, we highly recommend the following resources:
+
+- Codeacademy: [https://www.codecademy.com/learn/learn-git](https://www.codecademy.com/learn/learn-git).
+
+
+- GitHub Guides: [https://guides.github.com/activities/hello-world/](https://guides.github.com/activities/hello-world/).
+
+- Try Git tutorial: [https://try.github.io/levels/1/challenges/1](https://try.github.io/levels/1/challenges/1).
+
+- Happy Git and GitHub for the useR: [http://happygitwithr.com/](http://happygitwithr.com/).
+
+
+
+## Why use Git and GitHub?
+
+- There are three main reasons to use Git and GitHub.
+
+  1. Sharing: Even if we do not take advantage of the advanced and powerful version control functionality, we can still use Git and GitHub to share our code.
+
+  2. Collaborating: Once you set up a central repo, you can have multiple people make changes to code and keep versions synched.
+
+- GitHub provides a free service for centralized repos.
+
+- GitHub also has a special utility, called a _pull request_, that can be used by anybody to suggest changes to your code.
+
+
+
+## Why use Git and GitHub?
+
+- You can easily either accept or deny the request.
+
+3\. Version control: The version control capabilities of Git permit us to keep track of changes we make to our code.
+
+- We can also revert back to previous versions of files.
+
+- Git also permits us to create _branches_ in which we can test out ideas, then decide if we _merge_ the new branch with the original.
+
+- Here we focus on the sharing aspects of Git and GitHub and refer the reader to the links above to learn more about this powerful tool.
+
+
+
+
+
+
+
+
+
+## Overview of Git
+
+- The main actions in Git are to:
+
+  1. **pull** changes from the remote repo, in this case the GitHub repo.
+
+  2. **add** files, or as we say in the Git lingo _stage_ files.
+
+  3. **commit** changes to the local repo.
+
+  4. **push** changes to the _remote_ repo, in our case the GitHub repo.
+
+
+
+## Overview of Git
+
+- To effectively permit version control and collaboration in Git, files move across four different areas:
+
+
+
+## Overview of Git
+
+```{r, echo=FALSE} 
+knitr::include_graphics(file.path(img_path,"git/git-layout.png")) 
+``` 
+
+
+## Overview of Git
+
+- But how does it all get started? There are two ways: we can clone an existing repo or initialize one.
+
+- We will explore cloning first.
+
+
+
+## Clone
+
+- We are going to _clone_ an existing _Upstream Repository_.
+
+- You can see it on GitHub here: [https://github.com/rairizarry/murders](https://github.com/rairizarry/murders).
+
+- By visiting this page, you can see multiple files and directories.
+
+- This is the Upstream Repository.
+
+- By clicking the green clone button, we can copy the repo's URL `https://github.com/rairizarry/murders.git`.
+
+
+
+## Clone
+
+- But what does _clone_ mean? Rather than download all these files to your computer, we are going to actually copy the entire Git structure, which means we will add the files and directories to each of the three local stages: Working Directory, Staging Area, and Local Repository.
+
+- When you clone, all three are exactly the same to start.
+
+- You can quickly see an example of this by doing the following.
+
+- Open a terminal and type:
+
+
+## Clone
+
+```{bash, eval=FALSE} 
+pwd 
+mkdir git-example 
+cd git-example 
+git clone https://github.com/rairizarry/murders.git 
+cd murders 
+``` 
+
+- You now have cloned a GitHub repo and have a working Git directory, with all the files, on your system.
+
+```{bash, eval=FALSE} 
+ls 
+``` 
+
+
+
+## Clone
+
+```{r, echo=FALSE} 
+knitr::include_graphics(file.path(img_path, "git/git-clone.png")) 
+``` 
+
+
+## Clone
+
+- The _Working Directory_ is the same as your Unix working directory.
+
+- When you edit files using an editor such as RStudio, you change the files in this area and only in this area.
+
+- Git can tell you how these files relate to the versions of the files in other areas with the command `git status`:
+
+
+
+## Clone
+
+```{r, echo=FALSE} 
+knitr::include_graphics(file.path(img_path, "git/git-status.png")) 
+``` 
+
+
+## Clone
+
+- If you check the status now, you will see that nothing has changed and you get the following message:
+
+```{bash, eval=FALSE} 
+git status 
+``` 
+
+- Now we are going to make changes to these files.
+
+- Eventually, we want these new versions of the files to be tracked and synched with the upstream repo.
+
+- But we don't want to keep track of every little change: we don't want to sync until we are sure these versions are final enough to share.
+
+
+
+## Clone
+
+- For this reason, edits in the staging area are not kept by the version control system.
+
+- To demonstrate, we add a file to the staging area with the `git add` command.
+
+- Below we create a file using the Unix `echo` command just as an example (in reality you would use RStudio):
+
+```{bash, eval=FALSE} 
+echo "test" >> new-file.txt 
+``` 
+
+- We are also adding a temporary file that we do not want to track at all:
+
+```{bash, eval=FALSE} 
+echo "temporary" >> tmp.txt 
+``` 
+
+
+
+## Clone
+
+- Now we can stage the file we eventually want to add to our repository:
+
+```{bash, eval=FALSE} 
+git add new-file.txt 
+``` 
+
+- Notice what the status says now:
+
+```{bash, eval=FALSE} 
+git status 
+``` 
+
+
+## Clone
+
+```{r, echo=FALSE} 
+knitr::include_graphics(file.path(img_path,"git/git-add.png")) 
+``` 
+
+
+## Clone
+
+- Because `new-file.txt` is staged, the current version of the file will get added to the local repository next time we commit, which we do as follows:
+
+```{bash, eval=FALSE} 
+git commit -m "adding a new file"  
+``` 
+
+- We have now changed the local repo, which you can confirm using.
+
+```{bash, eval=FALSE} 
+git status 
+``` 
+
+
+
+
+## Clone
+
+```{r, echo=FALSE} 
+knitr::include_graphics(file.path(img_path,"git/git-commit.png")) 
+``` 
+
+
+## Clone
+
+- However, if we edit that file again, it changes only in the working directory.
+
+- To add to the local repo, we need to stage it and commit the changes that are added to the local repo:
+
+```{bash, eval=FALSE} 
+echo "adding a line" >> new-file.txt 
+git add new-file.txt 
+git commit -m "adding a new line to new-file" 
+``` 
+
+- Note that this step is often unnecessary in our uses of Git.
+
+- We can skip the staging part if we add the file name to the commit command like this:
+
+
+
+## Clone
+
+```{bash, eval=FALSE} 
+echo "adding a second line" >> new-file.txt 
+git commit -m "minor change to new-file" new-file.txt 
+``` 
+
+- We can keep track of all the changes we have made with:
+
+```{bash, eval=FALSE} 
+git log new-file.txt 
+``` 
+
+- To keep everything synced, the final step is to push the changes to the upstream repo.
+
+- This is done with the `git push` command like this:
+
+```{bash, eval=FALSE} 
+git push 
+``` 
+
+
+
+## Clone
+
+```{r, echo=FALSE} 
+knitr::include_graphics(file.path(img_path,"git/git-push.png")) 
+``` 
+
+
+## Clone
+
+- However, in this particular example, you will not be able to do this because you do not have permission to edit the upstream repo.
+
+- If this was your repo, you could.
+
+- If this is a collaborative project, the upstream repo may change and become different than our version.
+
+- To update our local repository to be like the upstream repo, we use the command `fetch`:
+
+```{bash, eval=FALSE} 
+git fetch 
+``` 
+
+
+
+## Clone
+
+```{r, echo=FALSE} 
+knitr::include_graphics(file.path(img_path,"git/git-fetch.png")) 
+``` 
+
+
+## Clone
+
+- And then to make these copies to the staging area and working directory, we use the command:
+
+```{bash, eval=FALSE} 
+git merge 
+``` 
+
+
+
+## Clone
+
+```{r, echo=FALSE} 
+knitr::include_graphics(file.path(img_path,"git/git-merge.png")) 
+``` 
+
+
+## Clone
+
+- However, we often just want to change both with one command.
+
+- For this, we use:
+
+```{bash, eval=FALSE} 
+git pull 
+``` 
+
+
+
+## Clone
+
+```{r, echo=FALSE} 
+knitr::include_graphics(file.path(img_path,"git/git-pull.png")) 
+``` 
+
+
+
+
+## Initializing a Git directory
+
+- Now let's learn the second way we can get started: by initializing a directory on our own computer rather than cloning.
+
+- Suppose we already have a populated local directory and we want to turn this directory into a collaborative GitHub repository.
+
+- The most efficient way of achieving this is by  _initializing_ the local directory.
+
+- To demonstrate how to do this we will initialize the gun murders directory.
+
+
+## Initializing a Git directory
+
+- Note that we already created a directory with several subdirectories on our computer but we do not yet have a Git local repo or GitHub upstream repo.
+
+- We start by creating a new repo on our GitHub page.
+
+
+
+
+## Initializing a Git directory
+
+- We click on the _New_ button:
+
+```{r, echo=FALSE} 
+knitr::include_graphics(screenshots[112])  
+``` 
+
+## Initializing a Git directory
+
+
+```{r, echo=FALSE} 
+knitr::include_graphics(screenshots[113])  
+``` 
+
+
+## Initializing a Git directory
+
+- We call it `murders` here to match the name of the directory on our local system.
+
+- But if you are doing this for another project, please choose an appropriate name.
+
+
+
+## Initializing a Git directory
+
+```{r, echo=FALSE} 
+knitr::include_graphics(screenshots[114])  
+``` 
+
+
+## Initializing a Git directory
+
+- We then get a series of instructions on how to get started, but we can instead use what we have learned.
+
+- The main thing we need from this page is to copy the repo's URL, in this case: `https://github.com/rairizarry/murders.git`.
+
+
+
+## Initializing a Git directory
+
+```{r, echo=FALSE} 
+knitr::include_graphics(screenshots[115])  
+``` 
+
+
+## Initializing a Git directory
+
+
+- At this moment, we can start a terminal and `cd` into our local projects directory.
+
+- In our example, it would be:
+
+```{bash, eval=FALSE} 
+cd ~/projects/murders 
+``` 
+
+- We then _intialize_ the directory.
+
+- This turns the directory into a Git directory and Git starts tracking:
+
+```{bash, eval=FALSE} 
+git init 
+``` 
+
+
+
+## Initializing a Git directory
+
+- All the files are now **only** in our working directory; no files are in our local repo or on GitHub.
+
+- The next step is to connect the local repo with the GitHub repo.
+
+- In a previous example, we had RStudio do this for us.
+
+- Now we need to do it ourselves.
+
+- We can by adding any of the files and committing it:
+
+```{bash, eval=FALSE} 
+git add README.txt 
+git commit -m "First commit. Adding README.txt file just to get started" 
+``` 
+
+
+
+## Initializing a Git directory
+
+- We now have a file in our local repo and can connect it to the upstream repo, which has url: `https://github.com/rairizarry/murders.git`.
+
+- To do this, we use the command `git remote add`.
+
+```{bash, eval=FALSE} 
+git remote add origin `https://github.com/rairizarry/murders.git` 
+``` 
+
+- We can now use `git push` since there is a connection to an upstream repo:
+
+```{bash, eval=FALSE} 
+git push 
+``` 
+
+
+
+## Using Git and GitHub in RStudio
+
+- While command line Git is a powerful and flexible tool, it can be somewhat daunting when we are getting started.
+
+- RStudio provides a graphical interface that facilitates the use of Git in the context of a data analysis project.
+
+- We describe how to use this RStudio feature to do this here.
+
+- Now we are ready to start an RStudio project that uses version control and stores the code on a GitHub repo.
+
+
+
+
+## Using Git and GitHub in RStudio
+
+- To do this, we start a project but, instead of _New Directory_, we will select _Version Control_ and then we will select _Git_ as our version control system:
+
+```{r, echo=FALSE, out.width="45%"} 
+knitr::include_graphics(screenshots[86:87])  
+``` 
+
+
+## Using Git and GitHub in RStudio
+
+- The repository URL is the link you used to clone.
+
+- We previously used `https://github.com/username/homework-0.git` as an example.
+
+- In the project directory name, you need to put the name of the folder that was generated, which in our example will be the name of the repo `homework-0`.
+
+- This will create a folder called `homework-0` on your local system.
+
+- Once you do this, the project is created and it is aware of the connection to a GitHub repo.
+
+
+
+## Using Git and GitHub in RStudio
+
+- You will see on the top right corner the name and type of project as well as a new tab on the upper right pane titled _Git_.
+
+
+
+## Using Git and GitHub in RStudio
+
+```{r, echo=FALSE, out.width="45%"} 
+knitr::include_graphics(screenshots[88:89])  
+``` 
+
+
+## Using Git and GitHub in RStudio
+
+- If you select this tab, it will show you the files on your project with some icons that give you information about these files and their relationship to the repo.
+
+- In the example below, we already added a file to the folder, called _code.R_ which you can see in the editing pane.
+
+
+
+## Using Git and GitHub in RStudio
+
+```{r, echo=FALSE} 
+knitr::include_graphics(screenshots[90])  
+``` 
+
+
+## Using Git and GitHub in RStudio
+
+- We now need to pay attention to the Git pane.
+
+- It is important to know that **your local files and the GitHub repo will not be synced automatically**.
+
+- You have to sync using git push when you are ready.
+
+- We show you can do this through RStudio rather than the terminal below.
+
+- Before we start working on a collaborative project, usually the first thing we do is _pull_ in the changes from the remote repo, in our case the one on GitHub.
+
+
+
+## Using Git and GitHub in RStudio
+
+- However, for the example shown here, since we are starting with an empty repo and we are the only ones making changes, we don't need to start by pulling.
+
+- In RStudio, the status of the file as it relates to the remote and local repos are represented in the status symbols with colors.
+
+- A yellow square means that Git knows nothing about this file.
+
+- To sync with the GitHub repo, we need to _add_ the file, then _commit_ the change to our local Git repo, then _push_ the change to the GitHub repo.
+
+
+
+## Using Git and GitHub in RStudio
+
+- Right now, the file is just on our computer.
+
+- To add the file using RStudio, we click the _Stage_ box.
+
+- You will see that the status icon now changes to a green A.
+
+
+
+## Using Git and GitHub in RStudio
+
+```{r, echo=FALSE} 
+knitr::include_graphics(screenshots[91])  
+``` 
+
+
+## Using Git and GitHub in RStudio
+
+- Note: we are only adding the _code.R_ file.
+
+- We don't necessarily need to add all the files in our local repo to the GitHub repo, only the ones we want to keep track of or the ones we want to share.
+
+- If our work is producing files of a certain type that we do not want to keep track of, we can add the suffix that defines these files to the .gitignore file.
+
+- More details on using .gitignore are included here: [https://git-scm.com/docs/gitignore](https://git-scm.com/docs/gitignore).
+
+
+
+## Using Git and GitHub in RStudio
+
+- These files will stop appearing in your RStudio Git pane.
+
+- For the example shown here, we will only be adding _code.R_.
+
+- But, in general, for an RStudio project, we recommend adding both the .gitignore and .Rproj files.
+
+- Now we are ready to commit the file to our local repo.
+
+- In RStudio, we can use the _Commit_ button.
+
+- This will open a new dialog window.
+
+
+
+## Using Git and GitHub in RStudio
+
+- With Git, whenever we commit a change, we are required to enter a comment describing the changes being _committed_.
+
+
+
+## Using Git and GitHub in RStudio
+
+```{r, echo=FALSE} 
+knitr::include_graphics(screenshots[92])  
+``` 
+
+
+## Using Git and GitHub in RStudio
+
+- In this case, we will simply describe that we are adding a new script.
+
+- In this dialog box, RStudio also gives you a summary of what you are changing to the GitHub repo.
+
+- In this case, because it is a new file, the entire file is highlighted as green, which highlights the changes.
+
+- Once we hit the commit button, we should see a message from Git with a summary of the changes that were committed.
+
+- Now we are ready to _push_ these changes to the GitHub repo.
+
+
+
+## Using Git and GitHub in RStudio
+
+- We can do this by clicking on the _Push_ button on the top right corner:
+
+
+
+## Using Git and GitHub in RStudio
+
+```{r, echo=FALSE, out.width="45%"} 
+knitr::include_graphics(screenshots[93:94])  
+``` 
+
+
+## Using Git and GitHub in RStudio
+
+- We now see a message from Git letting us know that the push has succeeded.
+
+- In the pop-up window we no longer see the `code.R` file.
+
+- This is because no new changes have been performed since we last pushed.
+
+- We can exit this pop-up window now and continue working on our code.
+
+
+
+## Using Git and GitHub in RStudio
+
+```{r, echo=FALSE, out.width="45%"} 
+knitr::include_graphics(screenshots[95:96])  
+``` 
+
+
+## Using Git and GitHub in RStudio
+
+- If we now visit our repo on the web, we will see that it matches our local copy.
+
+
+
+## Using Git and GitHub in RStudio
+
+```{r, echo=FALSE} 
+knitr::include_graphics(screenshots[97])  
+``` 
+
+
+## Other useful commands
+
+```{bash, eval=FALSE}
+git checkout filename
+```
+
+
+```{bash, eval=FALSE}
+git reset 
+```
+
+
+
