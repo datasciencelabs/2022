@@ -191,7 +191,7 @@ groups <- cutree(h, k = 10)
 
 - Note that the clustering provides some insights into types of movies.
 
-- Group 4 appears to be blockbusters:
+- Group 4 appears to be award winning and popular movies:
 
 ```{r} 
 names(groups)[groups==4] 
