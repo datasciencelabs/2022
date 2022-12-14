@@ -1,0 +1,88 @@
+---
+title: "Quarto intro"
+author: "Rafael Irizarry"
+format: html
+---
+
+## Very similar syntax to R markdown
+
+```{r}
+#| warning: false
+library(tidyverse)
+library(dslabs)
+```
+
+We can provide arguments using `#|` :
+
+```{r}
+#| echo: false
+data(murders)
+library(ggthemes)
+library(ggrepel)
+
+r <- murders |> 
+  summarize(pop=sum(population), tot=sum(total)) |> 
+  mutate(rate = tot/pop*10^6) |> 
+  pull(rate)
+
+murders |> ggplot(aes(x = population/10^6, y = total, label = abb)) +  
+  geom_abline(intercept = log10(r), lty=2, col="darkgrey") +
+  geom_point(aes(color=region), size = 3) +
+  geom_text_repel() + 
+  scale_x_log10() +
+  scale_y_log10() +
+  xlab("Populations in millions (log scale)") + 
+  ylab("Total number of murders (log scale)") +
+  ggtitle("US Gun Murders in 2010") +
+  scale_color_discrete(name="Region") +
+  theme_economist()
+```
+
+## Python
+
+An improvement is that we can use Python and R in same session using `reticulate` package:
+
+```{r, eval=FALSE}
+# Only run this the first time.
+install.packages("reticulate")
+py_install("numpy")
+py_install("matplotlib")
+```
+
+With that in place we can run Python: 
+
+```{r}
+library(reticulate)
+```
+
+Create an object in Python
+
+```{python}
+x = "R is"
+y = "awesome"
+z =  x + y
+print(z)
+```
+
+And use created ojects in R:
+
+```{r}
+print(py$z)
+```
+
+
+Similarly we can create objects in R
+
+```{r}
+x <- "Python is"
+y <- "awesome"
+z <- paste(x, y)
+```
+
+and access them in Python
+
+```{python}
+r.z
+```
+
+

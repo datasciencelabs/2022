@@ -1,0 +1,97 @@
+---
+title: "Going further"
+author: "Rafael A. Irizarry"
+date: "`r lubridate::today()`"
+output:
+  ioslides_presentation:
+    fig_caption: no
+    fig_height: 5
+    fig_width: 7
+    out_width: "70%"
+  beamer_presentation: default
+  slidy_presentation: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(dslabs)
+library(gridExtra)
+library(ggthemes)
+ds_theme_set()
+options(digits = 3)
+knitr::opts_chunk$set(
+  comment = "#>",
+  collapse = TRUE,
+  cache = TRUE,
+  out.width = "70%",
+  fig.align = "center",
+  fig.width = 6,
+  fig.asp = 0.618,  # 1 / phi
+  fig.show = "hold"
+)
+
+img_path <- "img"
+```
+
+## What next?
+
+* We only scratched the surface of data analysis tools in this class
+
+* Here we give some recommendations of what to learn next?
+
+## Programming
+
+* If you are interested in writing more efficient code
+
+  * data.table
+  
+  * Parallelization
+  
+  * Python
+  
+  * C++ and Rcpp
+  
+  * Cloud computing
+
+## Other useful computing tools
+
+  * SQL
+  
+  * Unix scripts
+  
+  * sed and awk
+  
+  * LaTeX
+  
+  * html and css
+  
+  
+## Matrix Algebra
+
+  * BST 210: Applied Regression Analysis
+  
+  * BST 235: Advanced Regression and Statistical Learning
+
+## Probability and Statistical Inference
+
+* BST 230: Probability I
+
+* BST 231: Statistical Inference I
+
+* BST 241: Statistical Inference II
+
+* BST 232: Methods I
+ 
+## Machine Learning
+
+* EPI 290: Deep Learning for Biomedical Data
+
+* BST 263: Applied Machine Learning 
+
+* BST 261: Data Science II 
+
+* MIT and Harvard CS have various courses
+
+
+
+
